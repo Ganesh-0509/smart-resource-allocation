@@ -1,0 +1,52 @@
+# OS and editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Node and frontend build artifacts
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.cache/
+*.tsbuildinfo
+
+# Build and cache outputs
+build/
+dist/
+.cache/
+
+# IDE settings
+.vscode/
+.idea/
