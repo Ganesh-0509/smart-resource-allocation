@@ -221,7 +221,7 @@ export default function VolunteerRegister() {
   if (registeredVolunteer) {
     return (
       <section className="mx-auto max-w-2xl rounded-2xl border border-emerald-100 bg-white p-8 text-center shadow-sm">
-        <h1 className="text-3xl font-bold text-slate-900">Welcome to JanaNaadi!</h1>
+        <h1 className="text-3xl font-bold text-slate-900">Welcome to Namma Connect!</h1>
         <p className="mt-3 text-slate-600">
           You&apos;ll receive an SMS when a task matches your skills.
         </p>
@@ -240,7 +240,7 @@ export default function VolunteerRegister() {
     <section className="mx-auto max-w-3xl rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm sm:p-8">
       <h1 className="text-3xl font-bold text-slate-900">Volunteer Registration</h1>
       <p className="mt-2 text-slate-600">
-        Join JanaNaadi and help communities across Tamil Nadu faster.
+        Join Namma Connect and help communities across Tamil Nadu faster.
       </p>
 
       <form className="mt-6 space-y-6" onSubmit={handleSubmit(onSubmit)}>

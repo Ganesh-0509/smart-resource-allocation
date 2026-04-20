@@ -56,7 +56,7 @@ async def send_assignment_sms(
     """Notify a volunteer that a new task has been assigned."""
     message = (
         f"Hello {volunteer_name}! A new task needs your help in {ward}: {task_title}. "
-        "Please open your dashboard to accept. - JanaNaadi NGO"
+        "Please open your dashboard to accept. - Namma Connect NGO"
     )
 
     sent = await _send_sms(volunteer_phone, message)
@@ -73,7 +73,7 @@ async def send_completion_thanks(
     """Send a thank-you SMS after a volunteer's task is marked completed."""
     message = (
         f"Thank you {volunteer_name}! Task '{task_title}' marked complete. "
-        "Your performance score has been updated. - JanaNaadi"
+        "Your performance score has been updated. - Namma Connect"
     )
 
     return await _send_sms(volunteer_phone, message)

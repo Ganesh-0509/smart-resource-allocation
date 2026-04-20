@@ -10,6 +10,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 
+import brandLogo from "./assets/namma-connect-logo.svg";
 import { checkBackendHealth } from "./api/health";
 import CoordinatorDashboard from "./pages/CoordinatorDashboard";
 import LandingPage from "./pages/LandingPage";
@@ -74,8 +75,10 @@ function Layout() {
       <header className="sticky top-0 z-40 border-b border-emerald-100 bg-white/95 backdrop-blur">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <NavLink to="/" className="text-2xl font-bold tracking-tight text-[#1D9E75]">
-              JanaNaadi
+            <NavLink to="/" className="inline-flex items-center gap-2 text-2xl font-bold tracking-tight text-[#1D9E75]">
+              <img src={brandLogo} alt="Namma Connect logo" className="h-9 w-9 rounded-xl shadow-sm" />
+              <span className="hidden sm:inline">Namma Connect</span>
+              <span className="sm:hidden">Namma</span>
             </NavLink>
             <span
               className={[
