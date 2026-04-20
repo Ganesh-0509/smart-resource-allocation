@@ -12,6 +12,17 @@ from app.services.nlp_classifier import classify_need
 logger = logging.getLogger(__name__)
 
 
+def _fallback_result() -> dict[str, Any]:
+    return {
+        "raw_text": "",
+        "confidence": 0.0,
+        "needs_review": True,
+        "language": "eng",
+        "language_detected": "eng",
+        "ocr_failed": True,
+    }
+
+
 def _detect_language(text: str) -> str:
     tamil_chars = len(re.findall(r"[\u0B80-\u0BFF]", text))
     english_chars = len(re.findall(r"[A-Za-z]", text))
@@ -125,18 +136,33 @@ def extract_text(image_bytes: bytes) -> dict[str, Any]:
         }
     except Exception as exc:
         logger.error("OCR extraction failed: %s", exc, exc_info=True)
-        return {
-            "raw_text": "",
-            "confidence": 0.0,
-            "needs_review": True,
-            "language": "eng",
-            "language_detected": "eng",
-        }
+        return _fallback_result()
 
 
 async def process_survey(image_bytes: bytes) -> dict[str, Any]:
     """Process survey image bytes into OCR metadata and task-prefill fields."""
     ocr_result = extract_text(image_bytes)
+
+    if ocr_result.get("ocr_failed"):
+        return {
+            "raw_text": "",
+            "confidence": 0.0,
+            "needs_review": True,
+            "language": "eng",
+            "title": "",
+            "need_type": "other",
+            "description": "",
+            "urgency_score": 0,
+            "ward": "",
+            "district": "",
+            "lat": 0.0,
+            "lng": 0.0,
+            "required_skills": [],
+            "household_count": 1,
+            "source": "ocr",
+            "summary": "",
+        }
+
     raw_text = ocr_result.get("raw_text", "")
 
     try:
@@ -154,6 +180,7 @@ async def process_survey(image_bytes: bytes) -> dict[str, Any]:
 
     summary = str(classification.get("summary") or "Community need report")
     ward = classification.get("ward")
+    district = classification.get("district") if isinstance(classification, dict) else None
 
     try:
         urgency_score = int(classification.get("urgency_score", 50))
@@ -181,7 +208,7 @@ async def process_survey(image_bytes: bytes) -> dict[str, Any]:
         "description": raw_text if raw_text else summary,
         "urgency_score": urgency_score,
         "ward": str(ward) if ward else "",
-        "district": "",
+        "district": str(district) if district else "Madurai",
         "lat": 0.0,
         "lng": 0.0,
         "required_skills": required_skills,

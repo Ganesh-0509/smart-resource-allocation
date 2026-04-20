@@ -1,6 +1,7 @@
 import axios from "axios";
 
 import type {
+  Assignment,
   DashboardActivity,
   DashboardStats,
   HeatmapPoint,
@@ -12,6 +13,10 @@ import type {
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
 });
+
+const JSON_HEADERS = {
+  "Content-Type": "application/json",
+};
 
 type ApiErrorPayload = {
   detail?: string | { message?: string } | Array<{ msg?: string } | string>;
@@ -65,7 +70,9 @@ function toApiError(error: unknown): Error {
 
 export async function createTask(data: TaskCreate): Promise<Task> {
   try {
-    const response = await api.post<Task>("/api/tasks/", data);
+    const response = await api.post<Task>("/api/tasks/", data, {
+      headers: JSON_HEADERS,
+    });
     return response.data;
   } catch (error) {
     throw toApiError(error);
@@ -111,13 +118,16 @@ export async function assignVolunteer(
   taskId: string,
   volunteerId: string,
   assignedBy: string,
-): Promise<{ message: string; task: Task; sms_sent?: boolean }> {
+): Promise<Assignment> {
   try {
-    const response = await api.post<{ message: string; task: Task; sms_sent?: boolean }>(
+    const response = await api.post<Assignment>(
       `/api/tasks/${taskId}/assign`,
       {
         volunteer_id: volunteerId,
         assigned_by: assignedBy,
+      },
+      {
+        headers: JSON_HEADERS,
       },
     );
     return response.data;
@@ -126,9 +136,11 @@ export async function assignVolunteer(
   }
 }
 
-export async function completeTask(taskId: string): Promise<{ message: string; task: Task }> {
+export async function completeTask(taskId: string): Promise<Task> {
   try {
-    const response = await api.patch<{ message: string; task: Task }>(`/api/tasks/${taskId}/complete`);
+    const response = await api.patch<Task>(`/api/tasks/${taskId}/complete`, {}, {
+      headers: JSON_HEADERS,
+    });
     return response.data;
   } catch (error) {
     throw toApiError(error);

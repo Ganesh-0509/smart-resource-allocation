@@ -85,6 +85,46 @@ function confidenceMeta(score: number): { label: string; className: string } {
   };
 }
 
+function confidenceDotClass(score: number): string {
+  if (score > 75) {
+    return "bg-emerald-500";
+  }
+
+  if (score >= 50) {
+    return "bg-amber-500";
+  }
+
+  return "bg-red-500";
+}
+
+function FieldLabel({ label, confidence }: { label: string; confidence: number }) {
+  return (
+    <label className="mb-1 flex items-center gap-2 text-sm font-medium text-slate-700">
+      <span className={["inline-flex h-2.5 w-2.5 rounded-full", confidenceDotClass(confidence)].join(" ")} />
+      {label}
+    </label>
+  );
+}
+
+function CameraIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h3l2-3h6l2 3h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z" />
+      <circle cx="12" cy="13" r="3" />
+    </svg>
+  );
+}
+
+function CheckmarkAnimation() {
+  return (
+    <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shadow-sm animate-pulse">
+      <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 12.5l4.2 4.2L19 7" />
+      </svg>
+    </div>
+  );
+}
+
 function StepIndicator({ step }: { step: Step }) {
   const steps = [
     { id: 1, title: "Step 1", subtitle: "Upload" },
@@ -137,7 +177,7 @@ export default function SurveyUpload() {
     need_type: "other",
     urgency_score: 50,
     ward: "",
-    district: "",
+    district: "Madurai",
     household_count: 1,
     required_skills: [],
     description: "",
@@ -166,28 +206,13 @@ export default function SurveyUpload() {
   const processMutation = useMutation({
     mutationFn: (file: File) => uploadSurvey(file),
     onSuccess: (result) => {
-      const completeFailure =
-        result.confidence_score <= 0 ||
-        !result.title ||
-        !result.summary ||
-        result.summary.toLowerCase().includes("could not be classified");
-
-      if (completeFailure) {
-        setErrorMessage(
-          "Could not read this image. Please try better lighting or use the manual form.",
-        );
-        setUploadResult(null);
-        setStep(1);
-        return;
-      }
-
       setUploadResult(result);
       setFormState({
-        title: result.title || "Community Need Report",
+        title: result.title || "",
         need_type: toTaskNeedType(result.need_type),
         urgency_score: Math.max(0, Math.min(100, Number(result.urgency_score || 50))),
         ward: result.ward || "",
-        district: "",
+        district: result.district || "Madurai",
         household_count: Math.max(1, Number(result.household_count || 1)),
         required_skills: toSkillList(result.required_skills),
         description: result.summary || "",
@@ -256,7 +281,7 @@ export default function SurveyUpload() {
       need_type: "other",
       urgency_score: 50,
       ward: "",
-      district: "",
+      district: "Madurai",
       household_count: 1,
       required_skills: [],
       description: "",
@@ -304,7 +329,7 @@ export default function SurveyUpload() {
       description: formState.description.trim(),
       urgency_score: Math.max(0, Math.min(100, formState.urgency_score)),
       ward: formState.ward.trim(),
-      district: formState.district.trim() || "Unknown",
+      district: formState.district.trim() || "Madurai",
       lat: formState.lat,
       lng: formState.lng,
       required_skills: formState.required_skills,
@@ -352,22 +377,23 @@ export default function SurveyUpload() {
             }}
             className="rounded-xl border-2 border-dashed border-emerald-200 bg-emerald-50/50 p-8 text-center"
           >
-            <p className="text-sm font-medium text-slate-700">Drag and drop a survey image here</p>
-            <p className="mt-1 text-xs text-slate-500">or choose one of the options below</p>
+            <p className="text-sm font-medium text-slate-700">Drop survey image here or click to browse</p>
+            <p className="mt-1 text-xs text-slate-500">Take a clear photo of the filled survey for best OCR accuracy</p>
 
             <div className="mt-4 flex flex-wrap justify-center gap-3">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50"
               >
                 Choose Image
               </button>
               <button
                 type="button"
                 onClick={() => cameraInputRef.current?.click()}
-                className="rounded-md bg-[#1D9E75] px-4 py-2 text-sm font-semibold text-white hover:bg-[#177f5e]"
+                className="inline-flex items-center gap-2 rounded-md bg-[#1D9E75] px-4 py-2 text-sm font-semibold text-white transition-all duration-300 hover:bg-[#177f5e]"
               >
+                <CameraIcon />
                 Take Photo
               </button>
             </div>
@@ -385,14 +411,14 @@ export default function SurveyUpload() {
               type="button"
               onClick={startProcessing}
               disabled={!selectedFile || processMutation.isPending}
-              className="inline-flex items-center gap-2 rounded-md bg-[#1D9E75] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#177f5e] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-md bg-[#1D9E75] px-5 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:bg-[#177f5e] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {processMutation.isPending ? (
                 <>
                   <svg viewBox="0 0 24 24" className="h-4 w-4 animate-spin" fill="none" stroke="currentColor" strokeWidth="2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 3a9 9 0 1 0 9 9" />
                   </svg>
-                  Reading survey... extracting fields...
+                  Reading survey... This takes a few seconds
                 </>
               ) : (
                 "Process Survey"
@@ -443,7 +469,7 @@ export default function SurveyUpload() {
 
             <div className="space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Title</label>
+                  <FieldLabel label="Title" confidence={confidence} />
                 <input
                   type="text"
                   value={formState.title}
@@ -453,7 +479,7 @@ export default function SurveyUpload() {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Need Type</label>
+                  <FieldLabel label="Need Type" confidence={confidence} />
                 <select
                   value={formState.need_type}
                   onChange={(event) =>
@@ -470,7 +496,8 @@ export default function SurveyUpload() {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  <label className="mb-1 flex items-center gap-2 text-sm font-medium text-slate-700">
+                    <span className={["inline-flex h-2.5 w-2.5 rounded-full", confidenceDotClass(confidence)].join(" ")} />
                   Urgency Score: {formState.urgency_score}
                 </label>
                 <input
@@ -487,7 +514,7 @@ export default function SurveyUpload() {
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">Ward</label>
+                  <FieldLabel label="Ward" confidence={confidence} />
                   <input
                     type="text"
                     value={formState.ward}
@@ -496,7 +523,7 @@ export default function SurveyUpload() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">District</label>
+                  <FieldLabel label="District" confidence={confidence} />
                   <input
                     type="text"
                     value={formState.district}
@@ -507,7 +534,7 @@ export default function SurveyUpload() {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Household Count</label>
+                <FieldLabel label="Household Count" confidence={confidence} />
                 <input
                   type="number"
                   min={1}
@@ -550,7 +577,7 @@ export default function SurveyUpload() {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Description</label>
+                <FieldLabel label="Description / Summary" confidence={confidence} />
                 <textarea
                   rows={4}
                   value={formState.description}
@@ -566,7 +593,7 @@ export default function SurveyUpload() {
               type="button"
               onClick={handleConfirmSave}
               disabled={confirmMutation.isPending}
-              className="inline-flex items-center gap-2 rounded-md bg-[#1D9E75] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#177f5e] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-md bg-[#1D9E75] px-5 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:bg-[#177f5e] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {confirmMutation.isPending ? (
                 <>
@@ -576,7 +603,7 @@ export default function SurveyUpload() {
                   Saving...
                 </>
               ) : (
-                "Confirm & Save Task"
+                "Confirm & Create Task"
               )}
             </button>
             <button
@@ -607,10 +634,11 @@ export default function SurveyUpload() {
 
       {step === 3 && createdTask && (
         <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-8 text-center shadow-sm">
-          <h2 className="text-3xl font-bold text-slate-900">Task created successfully!</h2>
+          <CheckmarkAnimation />
+          <h2 className="mt-4 text-3xl font-bold text-slate-900">Task created successfully!</h2>
           <p className="mt-2 text-slate-700">The survey has been digitized and converted into a task.</p>
 
-          <div className="mx-auto mt-6 max-w-md rounded-xl border border-emerald-200 bg-white p-4 text-left">
+          <div className="mx-auto mt-6 max-w-md rounded-xl border border-emerald-200 bg-white p-4 text-left shadow-sm">
             <p className="text-sm text-slate-500">Title</p>
             <p className="font-semibold text-slate-900">{createdTask.title}</p>
 
@@ -628,8 +656,16 @@ export default function SurveyUpload() {
                 <p className="text-slate-800">{createdTask.ward || "-"}</p>
               </div>
               <div>
+                <p className="text-slate-500">District</p>
+                <p className="text-slate-800">{createdTask.district || "Madurai"}</p>
+              </div>
+              <div>
                 <p className="text-slate-500">Households</p>
                 <p className="text-slate-800">{createdTask.household_count ?? 1}</p>
+              </div>
+              <div>
+                <p className="text-slate-500">Source</p>
+                <p className="capitalize text-slate-800">{createdTask.source || "survey"}</p>
               </div>
             </div>
           </div>
@@ -644,7 +680,7 @@ export default function SurveyUpload() {
             </button>
             <Link
               to="/coordinator"
-              className="rounded-md bg-[#1D9E75] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#177f5e]"
+              className="rounded-md bg-[#1D9E75] px-5 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:bg-[#177f5e]"
             >
               View in Coordinator Dashboard
             </Link>

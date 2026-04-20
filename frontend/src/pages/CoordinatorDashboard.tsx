@@ -19,6 +19,13 @@ type UrgencyTab = "all" | "critical" | "high" | "medium";
 
 type NeedTypeFilter = "all" | TaskNeedType;
 
+type ActivityFeedItem = {
+  time: string;
+  action: string;
+  actor: string;
+  task_title: string;
+};
+
 const urgencyTabs: Array<{ key: UrgencyTab; label: string }> = [
   { key: "all", label: "All" },
   { key: "critical", label: "Critical" },
@@ -84,6 +91,32 @@ function LoadingSpinner({ label }: { label?: string }) {
   );
 }
 
+function parseActivityDetails(details: string | undefined): Record<string, string> {
+  if (!details) {
+    return {};
+  }
+
+  return details.split(";").reduce<Record<string, string>>((acc, pair) => {
+    const [rawKey, rawValue] = pair.split("=");
+    if (!rawKey || !rawValue) {
+      return acc;
+    }
+    acc[rawKey.trim().toLowerCase()] = rawValue.trim();
+    return acc;
+  }, {});
+}
+
+function normalizeActivity(item: DashboardActivity): ActivityFeedItem {
+  const parsedDetails = parseActivityDetails(item.details);
+
+  return {
+    time: item.created_at || new Date().toISOString(),
+    action: item.action_type || parsedDetails.action || "Updated",
+    actor: item.actor_id || parsedDetails.actor || "system",
+    task_title: item.task_title || "Task update",
+  };
+}
+
 export default function CoordinatorDashboard() {
   const queryClient = useQueryClient();
 
@@ -92,6 +125,7 @@ export default function CoordinatorDashboard() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [matches, setMatches] = useState<VolunteerMatch[]>([]);
   const [matchedTaskId, setMatchedTaskId] = useState<string | null>(null);
+  const [showMobileDetailSheet, setShowMobileDetailSheet] = useState(false);
 
   const statsQuery = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats"],
@@ -101,7 +135,7 @@ export default function CoordinatorDashboard() {
 
   const tasksQuery = useQuery<Task[]>({
     queryKey: ["dashboard-tasks"],
-    queryFn: () => getTasks(),
+    queryFn: () => getTasks({ status: "open" }),
     refetchInterval: 30_000,
   });
 
@@ -128,6 +162,10 @@ export default function CoordinatorDashboard() {
     return allTasks.find((task) => task.id === selectedTaskId) || null;
   }, [allTasks, selectedTaskId]);
 
+  const normalizedActivities = useMemo<ActivityFeedItem[]>(() => {
+    return (activityQuery.data || []).map(normalizeActivity).slice(0, 10);
+  }, [activityQuery.data]);
+
   useEffect(() => {
     if (!filteredTasks.length) {
       setSelectedTaskId(null);
@@ -145,6 +183,12 @@ export default function CoordinatorDashboard() {
       setMatches([]);
     }
   }, [selectedTaskId, matchedTaskId]);
+
+  useEffect(() => {
+    if (!selectedTask) {
+      setShowMobileDetailSheet(false);
+    }
+  }, [selectedTask]);
 
   const findMatchesMutation = useMutation({
     mutationFn: (taskId: string) => getTaskMatches(taskId),
@@ -183,7 +227,7 @@ export default function CoordinatorDashboard() {
   });
 
   const stats = statsQuery.data;
-  const activities = (activityQuery.data || []).slice(0, 10);
+  const activities = normalizedActivities;
   const hasQueryError = statsQuery.isError || tasksQuery.isError || activityQuery.isError;
 
   async function retryDashboardQueries() {
@@ -217,6 +261,19 @@ export default function CoordinatorDashboard() {
             <MetricsCard label="Completed Today" value={stats?.completed_today ?? 0} loading={statsQuery.isLoading} />
             <MetricsCard label="Active Volunteers" value={stats?.active_volunteers ?? 0} loading={statsQuery.isLoading} />
           </div>
+
+          {statsQuery.isError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              <p>{statsQuery.error instanceof Error ? statsQuery.error.message : "Failed to load — Retry"}</p>
+              <button
+                type="button"
+                onClick={() => void statsQuery.refetch()}
+                className="mt-2 rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
+              >
+                Failed to load — Retry
+              </button>
+            </div>
+          )}
 
           <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
             <div className="flex flex-wrap items-center gap-2">
@@ -268,13 +325,13 @@ export default function CoordinatorDashboard() {
 
               {tasksQuery.isError && (
                 <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                  <p>{tasksQuery.error instanceof Error ? tasksQuery.error.message : "Failed to load tasks."}</p>
+                  <p>{tasksQuery.error instanceof Error ? tasksQuery.error.message : "Failed to load — Retry"}</p>
                   <button
                     type="button"
                     onClick={() => void tasksQuery.refetch()}
                     className="mt-2 rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
                   >
-                    Retry tasks
+                    Failed to load — Retry
                   </button>
                 </div>
               )}
@@ -287,7 +344,14 @@ export default function CoordinatorDashboard() {
 
               {filteredTasks.map((task) => (
                 <div key={task.id} className="space-y-1">
-                  <TaskCard task={task} isSelected={task.id === selectedTaskId} onSelect={(item) => setSelectedTaskId(item.id)} />
+                  <TaskCard
+                    task={task}
+                    isSelected={task.id === selectedTaskId}
+                    onSelect={(item) => {
+                      setSelectedTaskId(item.id);
+                      setShowMobileDetailSheet(true);
+                    }}
+                  />
                   <div className="px-1 text-xs text-slate-500">
                     Status: <span className="font-semibold capitalize text-slate-700">{task.status}</span>
                   </div>
@@ -299,13 +363,13 @@ export default function CoordinatorDashboard() {
 
         <section className="space-y-4 lg:col-span-7">
           {!selectedTask && (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500 shadow-sm">
+            <div className="hidden rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500 shadow-sm md:block">
               Select a task from the left panel to view details and assign volunteers.
             </div>
           )}
 
           {selectedTask && (
-            <>
+            <div className="hidden space-y-4 md:block">
               <article className="rounded-xl border border-emerald-100 bg-white p-5 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
@@ -323,8 +387,16 @@ export default function CoordinatorDashboard() {
                     <dd className="text-slate-800">{selectedTask.ward || "-"}</dd>
                   </div>
                   <div>
+                    <dt className="font-medium text-slate-500">District</dt>
+                    <dd className="text-slate-800">{selectedTask.district || "-"}</dd>
+                  </div>
+                  <div>
                     <dt className="font-medium text-slate-500">Households</dt>
                     <dd className="text-slate-800">{selectedTask.household_count ?? 1}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-medium text-slate-500">Urgency Score</dt>
+                    <dd className="text-slate-800">{selectedTask.urgency_score}</dd>
                   </div>
                   <div>
                     <dt className="font-medium text-slate-500">Need Type</dt>
@@ -335,6 +407,17 @@ export default function CoordinatorDashboard() {
                     <dd className="capitalize text-slate-800">{selectedTask.source || "manual"}</dd>
                   </div>
                 </dl>
+
+                <div className="mt-4">
+                  <p className="text-sm font-medium text-slate-500">Required Skills</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {(selectedTask.required_skills || []).map((skill) => (
+                      <span key={skill} className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
 
                 <button
                   type="button"
@@ -361,6 +444,13 @@ export default function CoordinatorDashboard() {
                 )}
 
                 <div className="space-y-3">
+                  {findMatchesMutation.isPending && (
+                    <>
+                      <div className="h-40 animate-pulse rounded-xl bg-slate-100" />
+                      <div className="h-40 animate-pulse rounded-xl bg-slate-100" />
+                    </>
+                  )}
+
                   {matches.map((volunteer) => (
                     <VolunteerCard
                       key={volunteer.id}
@@ -378,24 +468,123 @@ export default function CoordinatorDashboard() {
                   ))}
                 </div>
               </article>
-            </>
+            </div>
           )}
 
           <ActivityFeed activities={activities} />
+          {activityQuery.isLoading && (
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="h-5 w-40 animate-pulse rounded bg-slate-200" />
+              <div className="mt-3 space-y-2">
+                <div className="h-12 animate-pulse rounded bg-slate-100" />
+                <div className="h-12 animate-pulse rounded bg-slate-100" />
+                <div className="h-12 animate-pulse rounded bg-slate-100" />
+              </div>
+            </div>
+          )}
           {activityQuery.isError && (
             <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              <p>{activityQuery.error instanceof Error ? activityQuery.error.message : "Activity feed is currently unavailable."}</p>
+              <p>{activityQuery.error instanceof Error ? activityQuery.error.message : "Failed to load — Retry"}</p>
               <button
                 type="button"
                 onClick={() => void activityQuery.refetch()}
                 className="mt-2 rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
               >
-                Retry activity feed
+                Failed to load — Retry
               </button>
             </div>
           )}
         </section>
       </div>
+
+      {selectedTask && showMobileDetailSheet && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <button
+            type="button"
+            aria-label="Close details"
+            className="absolute inset-0 bg-black/30"
+            onClick={() => setShowMobileDetailSheet(false)}
+          />
+
+          <section className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-2xl border border-slate-200 bg-white p-4 shadow-2xl">
+            <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-slate-300" />
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">{selectedTask.title}</h2>
+                <p className="mt-1 text-sm text-slate-600">{selectedTask.description || "No description available for this task."}</p>
+              </div>
+              <UrgencyBadge score={selectedTask.urgency_score} />
+            </div>
+
+            <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <dt className="font-medium text-slate-500">Ward</dt>
+                <dd className="text-slate-800">{selectedTask.ward || "-"}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-slate-500">District</dt>
+                <dd className="text-slate-800">{selectedTask.district || "-"}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-slate-500">Urgency Score</dt>
+                <dd className="text-slate-800">{selectedTask.urgency_score}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-slate-500">Households</dt>
+                <dd className="text-slate-800">{selectedTask.household_count ?? 1}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-slate-500">Source</dt>
+                <dd className="capitalize text-slate-800">{selectedTask.source || "manual"}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-slate-500">Need Type</dt>
+                <dd className="capitalize text-slate-800">{selectedTask.need_type}</dd>
+              </div>
+            </dl>
+
+            <div className="mt-4">
+              <p className="text-sm font-medium text-slate-500">Required Skills</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {(selectedTask.required_skills || []).map((skill) => (
+                  <span key={skill} className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => findMatchesMutation.mutate(selectedTask.id)}
+              disabled={findMatchesMutation.isPending}
+              className="mt-5 inline-flex items-center gap-2 rounded-md bg-[#1D9E75] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#177f5e] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {findMatchesMutation.isPending ? <LoadingSpinner label="Matching..." /> : "Find Best Volunteers"}
+            </button>
+
+            <div className="mt-4 space-y-3">
+              {findMatchesMutation.isPending && (
+                <>
+                  <div className="h-40 animate-pulse rounded-xl bg-slate-100" />
+                  <div className="h-40 animate-pulse rounded-xl bg-slate-100" />
+                </>
+              )}
+
+              {matches.map((volunteer) => (
+                <VolunteerCard
+                  key={volunteer.id}
+                  volunteer={volunteer}
+                  onAssign={(item) => {
+                    assignMutation.mutate({ taskId: selectedTask.id, volunteerId: item.id });
+                  }}
+                  isAssigning={assignMutation.isPending && assignMutation.variables?.volunteerId === volunteer.id}
+                />
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

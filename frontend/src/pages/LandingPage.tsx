@@ -149,22 +149,40 @@ export default function LandingPage() {
         <h2 className="text-2xl font-semibold text-slate-900">Need categories</h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <article className="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
-            <p className="text-sm font-semibold text-emerald-800">Nutrition</p>
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-200 text-sm font-bold text-emerald-900">N</span>
+              <p className="text-sm font-semibold text-emerald-800">Nutrition</p>
+            </div>
           </article>
           <article className="rounded-xl border border-red-100 bg-red-50 p-4">
-            <p className="text-sm font-semibold text-red-800">Medical</p>
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-red-200 text-sm font-bold text-red-900">M</span>
+              <p className="text-sm font-semibold text-red-800">Medical</p>
+            </div>
           </article>
           <article className="rounded-xl border border-amber-100 bg-amber-50 p-4">
-            <p className="text-sm font-semibold text-amber-800">Shelter</p>
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-amber-200 text-sm font-bold text-amber-900">S</span>
+              <p className="text-sm font-semibold text-amber-800">Shelter</p>
+            </div>
           </article>
           <article className="rounded-xl border border-blue-100 bg-blue-50 p-4">
-            <p className="text-sm font-semibold text-blue-800">Education</p>
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-blue-200 text-sm font-bold text-blue-900">E</span>
+              <p className="text-sm font-semibold text-blue-800">Education</p>
+            </div>
           </article>
           <article className="rounded-xl border border-cyan-100 bg-cyan-50 p-4">
-            <p className="text-sm font-semibold text-cyan-800">Water</p>
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-cyan-200 text-sm font-bold text-cyan-900">W</span>
+              <p className="text-sm font-semibold text-cyan-800">Water</p>
+            </div>
           </article>
           <article className="rounded-xl border border-violet-100 bg-violet-50 p-4">
-            <p className="text-sm font-semibold text-violet-800">Livelihood</p>
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-violet-200 text-sm font-bold text-violet-900">L</span>
+              <p className="text-sm font-semibold text-violet-800">Livelihood</p>
+            </div>
           </article>
         </div>
       </section>

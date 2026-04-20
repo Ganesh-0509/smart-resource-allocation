@@ -1,10 +1,14 @@
 import axios from "axios";
 
-import type { Assignment, Volunteer, VolunteerCreate } from "../types";
+import type { Assignment, DeleteVolunteerResponse, Volunteer, VolunteerCreate } from "../types";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
 });
+
+const JSON_HEADERS = {
+  "Content-Type": "application/json",
+};
 
 type ApiErrorPayload = {
   detail?: string | { message?: string } | Array<{ msg?: string } | string>;
@@ -58,7 +62,9 @@ function toApiError(error: unknown): Error {
 
 export async function registerVolunteer(data: VolunteerCreate): Promise<Volunteer> {
   try {
-    const response = await api.post<Volunteer>("/api/volunteers/register", data);
+    const response = await api.post<Volunteer>("/api/volunteers/register", data, {
+      headers: JSON_HEADERS,
+    });
     return response.data;
   } catch (error) {
     throw toApiError(error);
@@ -67,9 +73,16 @@ export async function registerVolunteer(data: VolunteerCreate): Promise<Voluntee
 
 export async function getAvailableVolunteers(): Promise<Volunteer[]> {
   try {
-    const response = await api.get<Volunteer[]>("/api/volunteers/", {
-      params: { available_only: true },
-    });
+    const response = await api.get<Volunteer[]>("/api/volunteers/");
+    return response.data.filter((volunteer) => Boolean(volunteer.availability));
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function getVolunteers(): Promise<Volunteer[]> {
+  try {
+    const response = await api.get<Volunteer[]>("/api/volunteers/");
     return response.data;
   } catch (error) {
     throw toApiError(error);
@@ -78,9 +91,15 @@ export async function getAvailableVolunteers(): Promise<Volunteer[]> {
 
 export async function updateAvailability(id: string, available: boolean): Promise<Volunteer> {
   try {
-    const response = await api.patch<Volunteer>(`/api/volunteers/${id}/availability`, {
-      availability: available,
-    });
+    const response = await api.patch<Volunteer>(
+      `/api/volunteers/${id}/availability`,
+      {
+        availability: available,
+      },
+      {
+        headers: JSON_HEADERS,
+      },
+    );
     return response.data;
   } catch (error) {
     throw toApiError(error);
@@ -99,6 +118,17 @@ export async function getVolunteerTasks(id: string): Promise<Assignment[]> {
 export async function getVolunteer(id: string): Promise<Volunteer> {
   try {
     const response = await api.get<Volunteer>(`/api/volunteers/${id}`);
+    return response.data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function deleteVolunteer(id: string): Promise<DeleteVolunteerResponse> {
+  try {
+    const response = await api.delete<DeleteVolunteerResponse>(`/api/volunteers/${id}`, {
+      headers: JSON_HEADERS,
+    });
     return response.data;
   } catch (error) {
     throw toApiError(error);

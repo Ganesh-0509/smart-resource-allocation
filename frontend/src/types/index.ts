@@ -45,8 +45,8 @@ export interface TaskCreate {
   lat: number;
   lng: number;
   required_skills: VolunteerSkill[] | string[];
-  household_count?: number;
-  source?: string;
+  household_count: number;
+  source: string;
 }
 
 export interface Task extends TaskCreate {
@@ -82,10 +82,12 @@ export interface DashboardStats {
 }
 
 export interface DashboardActivity {
-  time: string;
-  action: string;
-  actor: string;
-  task_title: string;
+  id: string;
+  action_type: string;
+  actor_id: string;
+  details: string;
+  created_at: string;
+  task_title?: string;
 }
 
 export interface HeatmapPoint {
@@ -104,9 +106,14 @@ export interface OCRResult {
   need_type: TaskNeedType | string;
   urgency_score: number;
   ward: string;
+  district: string;
   household_count: number;
   required_skills: string[];
   summary: string;
   confidence_score: number;
   needs_review: boolean;
+}
+
+export interface DeleteVolunteerResponse {
+  message: string;
 }

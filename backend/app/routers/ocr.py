@@ -51,6 +51,7 @@ class OCRUploadResponse(BaseModel):
     need_type: str
     urgency_score: int
     ward: str
+    district: str
     household_count: int
     required_skills: list[str]
     summary: str
@@ -115,7 +116,24 @@ async def upload_survey_image(image: UploadFile = File(...)):
         if len(image_bytes) > MAX_IMAGE_SIZE_BYTES:
             raise HTTPException(status_code=400, detail="Image size must be 10MB or smaller.")
 
-        extracted = await process_survey(image_bytes)
+        try:
+            extracted = await process_survey(image_bytes)
+        except Exception as exc:
+            logger.exception("OCR processing failed, using fallback response: %s", exc)
+            extracted = {
+                "raw_text": "",
+                "confidence": 0.0,
+                "needs_review": True,
+                "title": "",
+                "need_type": "other",
+                "description": "",
+                "urgency_score": 0,
+                "ward": "",
+                "district": "",
+                "required_skills": [],
+                "household_count": 1,
+                "summary": "",
+            }
 
         image_url = _upload_image_to_storage(
             image_bytes=image_bytes,
@@ -145,10 +163,11 @@ async def upload_survey_image(image: UploadFile = File(...)):
 
         return {
             "upload_id": upload_id,
-            "title": extracted.get("title", "Community Need Report"),
+            "title": extracted.get("title", ""),
             "need_type": extracted.get("need_type", "other"),
-            "urgency_score": int(extracted.get("urgency_score", 50)),
+            "urgency_score": int(extracted.get("urgency_score", 0)),
             "ward": extracted.get("ward", ""),
+            "district": extracted.get("district", "Madurai"),
             "household_count": int(extracted.get("household_count", 1)),
             "required_skills": required_skills,
             "summary": extracted.get("summary", ""),

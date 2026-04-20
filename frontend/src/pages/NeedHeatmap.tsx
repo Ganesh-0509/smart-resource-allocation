@@ -3,6 +3,7 @@ import "leaflet/dist/leaflet.css";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { LatLngExpression } from "leaflet";
+import L from "leaflet";
 import { Link } from "react-router-dom";
 
 import { getHeatmapData } from "../api/tasks";
@@ -14,7 +15,14 @@ type LeafletModule = typeof import("react-leaflet");
 type NeedTypeFilter = "all" | TaskNeedType;
 type StatusFilter = "open" | "all";
 
-const tamilNaduCenter: LatLngExpression = [11.1271, 78.6569];
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+});
+
+const tamilNaduCenter: LatLngExpression = [10.0, 78.5];
 
 const needTypeFilters: Array<{ value: NeedTypeFilter; label: string }> = [
   { value: "all", label: "All" },
@@ -51,7 +59,7 @@ function urgencyColor(score: number): string {
 
 function markerRadius(score: number): number {
   const clamped = Math.max(0, Math.min(100, score));
-  return 8 + (clamped / 100) * 12;
+  return 10 + (clamped / 100) * 12;
 }
 
 function isValidPoint(point: HeatmapPoint): boolean {
@@ -78,6 +86,44 @@ function titleCase(value: string): string {
     .split("_")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function needTypeLabel(value: TaskNeedType | string | undefined): string {
+  return titleCase(toNeedType(value));
+}
+
+function needTypePillClass(value: TaskNeedType | string | undefined): string {
+  const normalized = toNeedType(value);
+
+  const classes: Record<TaskNeedType, string> = {
+    nutrition: "bg-emerald-50 text-emerald-700",
+    medical: "bg-rose-50 text-rose-700",
+    shelter: "bg-amber-50 text-amber-700",
+    education: "bg-sky-50 text-sky-700",
+    water: "bg-cyan-50 text-cyan-700",
+    livelihood: "bg-violet-50 text-violet-700",
+    other: "bg-slate-100 text-slate-700",
+  };
+
+  return classes[normalized];
+}
+
+function needTypeDotClass(value: TaskNeedType): string {
+  const classes: Record<TaskNeedType, string> = {
+    nutrition: "bg-emerald-500",
+    medical: "bg-rose-500",
+    shelter: "bg-amber-500",
+    education: "bg-sky-500",
+    water: "bg-cyan-500",
+    livelihood: "bg-violet-500",
+    other: "bg-slate-500",
+  };
+
+  return classes[value];
+}
+
+function normalizedStatus(value: string | undefined): string {
+  return (value || "open").toLowerCase();
 }
 
 export default function NeedHeatmap() {
@@ -109,18 +155,16 @@ export default function NeedHeatmap() {
   const filteredPoints = useMemo(() => {
     return points.filter((point) => {
       const normalizedNeedType = toNeedType(point.need_type);
-      const normalizedStatus = (point.status || "open").toString().toLowerCase();
+      const pointStatus = normalizedStatus(point.status);
 
       const passesNeedType = needTypeFilter === "all" ? true : normalizedNeedType === needTypeFilter;
-      const passesStatus = statusFilter === "all" ? true : normalizedStatus === "open";
+      const passesStatus = statusFilter === "all" ? true : pointStatus === "open";
 
       return passesNeedType && passesStatus;
     });
   }, [points, needTypeFilter, statusFilter]);
 
-  const openNeedsOnMap = filteredPoints.filter(
-    (point) => (point.status || "open").toString().toLowerCase() === "open",
-  ).length;
+  const openNeedsOnMap = filteredPoints.filter((point) => normalizedStatus(point.status) === "open").length;
 
   const mostUrgentPoint = useMemo(() => {
     if (!filteredPoints.length) {
@@ -217,9 +261,9 @@ export default function NeedHeatmap() {
           </div>
 
           {isLoading || mapLoading ? (
-            <div className="flex h-[560px] items-center justify-center text-slate-500">Loading map...</div>
+            <div className="flex h-[500px] items-center justify-center text-slate-500">Loading map...</div>
           ) : isError ? (
-            <div className="flex h-[560px] flex-col items-center justify-center gap-3 p-6 text-center text-red-700">
+            <div className="flex h-[500px] flex-col items-center justify-center gap-3 p-6 text-center text-red-700">
               <p>{error instanceof Error ? error.message : "Failed to load map data."}</p>
               <button
                 type="button"
@@ -234,46 +278,58 @@ export default function NeedHeatmap() {
               const { CircleMarker, MapContainer, Popup, TileLayer } = leafletModule;
 
               return (
-                <MapContainer
-                  center={tamilNaduCenter}
-                  zoom={7}
-                  scrollWheelZoom
-                  className="h-[560px] w-full"
-                >
-                  <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  />
+                <div style={{ height: "500px", width: "100%" }}>
+                  <MapContainer
+                    center={tamilNaduCenter}
+                    zoom={8}
+                    scrollWheelZoom
+                    style={{ height: "500px", width: "100%" }}
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
 
-                  {filteredPoints.map((point, index) => {
-                    const color = urgencyColor(point.urgency_score);
-                    const radius = markerRadius(point.urgency_score);
-                    const needType = toNeedType(point.need_type);
+                    {filteredPoints.map((point, index) => {
+                      const color = urgencyColor(point.urgency_score);
+                      const radius = markerRadius(point.urgency_score);
+                      const needType = toNeedType(point.need_type);
 
-                    return (
-                      <CircleMarker
-                        key={`${point.title}-${point.lat}-${point.lng}-${index}`}
-                        center={[point.lat, point.lng]}
-                        radius={radius}
-                        pathOptions={{ color, fillColor: color, fillOpacity: 0.65, weight: 1 }}
-                      >
-                        <Popup>
-                          <div className="min-w-[220px] space-y-2">
-                            <h3 className="text-sm font-semibold text-slate-900">{point.title || "Untitled Need"}</h3>
-                            <p className="text-xs text-slate-600">Ward: {point.ward || "Unknown"}</p>
-                            <p className="text-xs text-slate-600">Need type: {titleCase(needType)}</p>
-                            <UrgencyBadge score={point.urgency_score} />
-                            <div>
-                              <Link to="/coordinator" className="text-xs font-semibold text-[#1D9E75] underline">
-                                View in Coordinator
-                              </Link>
+                      return (
+                        <CircleMarker
+                          key={`${point.title}-${point.lat}-${point.lng}-${index}`}
+                          center={[point.lat, point.lng]}
+                          radius={radius}
+                          pathOptions={{ color: "#ffffff", fillColor: color, fillOpacity: 0.8, weight: 2 }}
+                        >
+                          <Popup>
+                            <div className="min-w-[220px] space-y-2">
+                              <h3 className="text-sm font-semibold text-slate-900">{point.title || "Untitled Need"}</h3>
+                              <p className="text-xs text-slate-600">Ward: {point.ward || "Unknown"}</p>
+                              <div className="flex items-center gap-2">
+                                <span className={[
+                                  "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                                  needTypePillClass(needType),
+                                ].join(" ")}
+                                >
+                                  {needTypeLabel(needType)}
+                                </span>
+                                <div className="scale-90 origin-left">
+                                  <UrgencyBadge score={point.urgency_score} />
+                                </div>
+                              </div>
+                              <div>
+                                <Link to="/coordinator" className="text-xs font-semibold text-[#1D9E75] underline">
+                                  View in Coordinator →
+                                </Link>
+                              </div>
                             </div>
-                          </div>
-                        </Popup>
-                      </CircleMarker>
-                    );
-                  })}
-                </MapContainer>
+                          </Popup>
+                        </CircleMarker>
+                      );
+                    })}
+                  </MapContainer>
+                </div>
               );
             })()
           )}
@@ -309,10 +365,16 @@ export default function NeedHeatmap() {
                 const width = Math.max(4, (count / maxNeedCount) * 100);
 
                 return (
-                  <div key={type}>
-                    <div className="mb-1 flex items-center justify-between text-xs text-slate-600">
-                      <span>{titleCase(type)}</span>
-                      <span>{count}</span>
+                  <div key={type} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs text-slate-600">
+                      <span className="inline-flex items-center gap-2">
+                        <span className={[
+                          "h-2.5 w-2.5 rounded-full",
+                          needTypeDotClass(type),
+                        ].join(" ")} />
+                        {titleCase(type)}
+                      </span>
+                      <span className="font-medium">{count}</span>
                     </div>
                     <div className="h-2 rounded-full bg-slate-200">
                       <div

@@ -209,6 +209,7 @@ export default function VolunteerRegister() {
 
     try {
       const response = await registerVolunteer(payload);
+      localStorage.setItem("namma_volunteer_id", response.id);
       localStorage.setItem("volunteer_id", response.id);
       localStorage.setItem("volunteerId", response.id);
       localStorage.setItem("role", "volunteer");

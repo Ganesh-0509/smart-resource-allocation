@@ -1,10 +1,11 @@
 services:
   - type: web
-    name: sra-backend
+    name: namma-connect-api
     runtime: python
+    rootDir: backend
     plan: free
-    buildCommand: pip install -r backend/requirements.txt
-    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: SUPABASE_URL
         sync: false
@@ -17,4 +18,7 @@ services:
       - key: TWILIO_TOKEN
         sync: false
       - key: TWILIO_FROM
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.11
         sync: false

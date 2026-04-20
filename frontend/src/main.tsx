@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 import App from "./App.tsx";
-import AppErrorBoundary from "./components/AppErrorBoundary";
+import { RoleProvider } from "./context/RoleContext";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -17,12 +17,12 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <AppErrorBoundary>
-        <BrowserRouter>
+    <BrowserRouter>
+      <RoleProvider>
+        <QueryClientProvider client={queryClient}>
           <App />
-        </BrowserRouter>
-      </AppErrorBoundary>
-    </QueryClientProvider>
+        </QueryClientProvider>
+      </RoleProvider>
+    </BrowserRouter>
   </StrictMode>,
 );

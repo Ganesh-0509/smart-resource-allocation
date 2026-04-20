@@ -6,6 +6,14 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
 });
 
+const JSON_HEADERS = {
+  "Content-Type": "application/json",
+};
+
+const MULTIPART_HEADERS = {
+  "Content-Type": "multipart/form-data",
+};
+
 type ApiErrorPayload = {
   detail?: string | { message?: string } | Array<{ msg?: string } | string>;
   message?: string;
@@ -61,7 +69,9 @@ export async function uploadSurvey(file: File): Promise<OCRResult> {
     const formData = new FormData();
     formData.append("image", file);
 
-    const response = await api.post<OCRResult>("/api/ocr/upload", formData);
+    const response = await api.post<OCRResult>("/api/ocr/upload", formData, {
+      headers: MULTIPART_HEADERS,
+    });
     return response.data;
   } catch (error) {
     throw toApiError(error);
@@ -70,7 +80,9 @@ export async function uploadSurvey(file: File): Promise<OCRResult> {
 
 export async function confirmSurvey(uploadId: string, taskData: TaskCreate): Promise<Task> {
   try {
-    const response = await api.post<Task>(`/api/ocr/confirm/${uploadId}`, taskData);
+    const response = await api.post<Task>(`/api/ocr/confirm/${uploadId}`, taskData, {
+      headers: JSON_HEADERS,
+    });
     return response.data;
   } catch (error) {
     throw toApiError(error);

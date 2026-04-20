@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Navigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -120,7 +120,10 @@ function StatsCard({ label, value, trend }: { label: string; value: string; tren
 }
 
 export default function VolunteerDashboard() {
-  const volunteerId = localStorage.getItem("volunteer_id") || localStorage.getItem("volunteerId");
+  const volunteerId =
+    localStorage.getItem("namma_volunteer_id") ||
+    localStorage.getItem("volunteer_id") ||
+    localStorage.getItem("volunteerId");
   const queryClient = useQueryClient();
 
   const volunteerQuery = useQuery<Volunteer>({
@@ -163,7 +166,10 @@ export default function VolunteerDashboard() {
   const rows = useMemo(() => normalizeTaskRows(tasksQuery.data || []), [tasksQuery.data]);
 
   const activeRows = useMemo(
-    () => rows.filter((row) => row.task.status === "assigned").sort((a, b) => b.task.urgency_score - a.task.urgency_score),
+    () =>
+      rows
+        .filter((row) => row.task.status === "assigned")
+        .sort((a, b) => b.task.urgency_score - a.task.urgency_score),
     [rows],
   );
 
@@ -202,7 +208,18 @@ export default function VolunteerDashboard() {
     completedThisWeek > completedLastWeek ? "up" : completedThisWeek < completedLastWeek ? "down" : "flat";
 
   if (!volunteerId) {
-    return <Navigate to="/volunteer/register" replace />;
+    return (
+      <section className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <h1 className="text-2xl font-semibold text-slate-900">No account found</h1>
+        <p className="mt-3 text-slate-600">Please register as a volunteer to view your tasks and availability dashboard.</p>
+        <Link
+          to="/volunteer/register"
+          className="mt-6 inline-flex items-center justify-center rounded-md bg-[#1D9E75] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#177f5e]"
+        >
+          Register as Volunteer
+        </Link>
+      </section>
+    );
   }
 
   const volunteer = volunteerQuery.data;

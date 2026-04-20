@@ -5,7 +5,7 @@ import os
 import re
 from typing import Any
 
-import google.generativeai as genai
+from google import genai
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -143,10 +143,13 @@ async def classify_need(text: str) -> dict[str, Any]:
     prompt = f"{_BASE_PROMPT}\nCommunity field report:\n{text.strip()}"
 
     try:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-2.5-flash")
+        client = genai.Client(api_key=api_key)
 
-        response = await asyncio.to_thread(model.generate_content, prompt)
+        response = await asyncio.to_thread(
+            client.models.generate_content,
+            model="gemini-2.5-flash",
+            contents=prompt,
+        )
         response_text = getattr(response, "text", "") or ""
         parsed = _extract_json(response_text)
         return _sanitize_result(parsed)
@@ -160,3 +163,22 @@ async def batch_classify(texts: list[str]) -> list[dict[str, Any]]:
     if not texts:
         return []
     return await asyncio.gather(*(classify_need(text) for text in texts))
+
+
+if __name__ == "__main__":
+    SAMPLE_TEXT = (
+        "3 families in Ward 7 are suffering from severe malnutrition. "
+        "Children under 5 are affected. Urgent medical and nutrition support needed."
+    )
+
+    result = asyncio.run(classify_need(SAMPLE_TEXT))
+    print(result)
+
+    need_type_ok = result.get("need_type") == "nutrition"
+    urgency_ok = int(result.get("urgency_score", 0)) > 80
+    skills = result.get("required_skills") or []
+    skills_ok = "nutrition" in skills and "medical" in skills
+
+    print(f"need_type=nutrition: {need_type_ok}")
+    print(f"urgency_score>80: {urgency_ok}")
+    print(f"required_skills has nutrition+medical: {skills_ok}")

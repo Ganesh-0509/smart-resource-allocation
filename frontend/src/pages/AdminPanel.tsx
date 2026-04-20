@@ -1,0 +1,184 @@
+import { useMemo } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast, { Toaster } from "react-hot-toast";
+
+import { deleteVolunteer, getVolunteers, updateAvailability } from "../api/volunteers";
+import type { Volunteer } from "../types";
+
+function VolunteerTableSkeleton() {
+  return (
+    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="min-w-[760px] p-4">
+        <div className="h-8 w-full animate-pulse rounded bg-slate-100" />
+        <div className="mt-3 h-8 w-full animate-pulse rounded bg-slate-100" />
+        <div className="mt-3 h-8 w-full animate-pulse rounded bg-slate-100" />
+        <div className="mt-3 h-8 w-full animate-pulse rounded bg-slate-100" />
+      </div>
+    </div>
+  );
+}
+
+export default function AdminPanel() {
+  const queryClient = useQueryClient();
+
+  const volunteersQuery = useQuery<Volunteer[]>({
+    queryKey: ["admin-volunteers"],
+    queryFn: getVolunteers,
+    refetchInterval: 60_000,
+  });
+
+  const availabilityMutation = useMutation({
+    mutationFn: ({ id, availability }: { id: string; availability: boolean }) => updateAvailability(id, availability),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-volunteers"] });
+      toast.success("Availability updated.");
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to update availability.");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteVolunteer(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-volunteers"] });
+      toast.success("Volunteer removed from active roster.");
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to remove volunteer.");
+    },
+  });
+
+  const volunteers = useMemo(() => volunteersQuery.data ?? [], [volunteersQuery.data]);
+
+  return (
+    <div className="space-y-6">
+      <Toaster position="top-right" toastOptions={{ duration: 2400 }} />
+
+      <section className="rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
+        <h1 className="text-3xl font-semibold text-slate-900">Admin Panel</h1>
+        <p className="mt-2 text-slate-600">Monitor volunteers, availability, and operational performance.</p>
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Total Volunteers</p>
+            <p className="mt-2 text-3xl font-bold text-[#1D9E75]">{volunteers.length}</p>
+          </article>
+          <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Available Now</p>
+            <p className="mt-2 text-3xl font-bold text-[#1D9E75]">{volunteers.filter((item) => item.availability).length}</p>
+          </article>
+          <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">High Performers</p>
+            <p className="mt-2 text-3xl font-bold text-[#1D9E75]">{volunteers.filter((item) => item.performance_score >= 80).length}</p>
+          </article>
+        </div>
+      </section>
+
+      {volunteersQuery.isLoading && <VolunteerTableSkeleton />}
+
+      {volunteersQuery.isError && (
+        <section className="rounded-2xl border border-red-200 bg-red-50 p-5 text-red-700 shadow-sm">
+          <h2 className="text-lg font-semibold text-red-800">Could not load volunteers</h2>
+          <p className="mt-2 text-sm">
+            {volunteersQuery.error instanceof Error ? volunteersQuery.error.message : "Unable to fetch volunteers."}
+          </p>
+          <button
+            type="button"
+            onClick={() => void volunteersQuery.refetch()}
+            className="mt-3 rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+          >
+            Retry
+          </button>
+        </section>
+      )}
+
+      {!volunteersQuery.isLoading && !volunteersQuery.isError && (
+        <section className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <table className="min-w-[760px] w-full text-left">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">Name</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">Phone</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">Skills</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">Performance</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">Availability</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {volunteers.length === 0 && (
+                <tr>
+                  <td className="px-4 py-6 text-sm text-slate-500" colSpan={6}>
+                    No volunteers found.
+                  </td>
+                </tr>
+              )}
+
+              {volunteers.map((volunteer) => {
+                const isAvailabilityPending =
+                  availabilityMutation.isPending && availabilityMutation.variables?.id === volunteer.id;
+                const isDeletePending = deleteMutation.isPending && deleteMutation.variables === volunteer.id;
+
+                return (
+                  <tr key={volunteer.id} className="border-t border-slate-200">
+                    <td className="px-4 py-3">
+                      <p className="text-sm font-semibold text-slate-900">{volunteer.name}</p>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-700">{volunteer.phone || "-"}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex max-w-sm flex-wrap gap-1.5">
+                        {(volunteer.skills || []).map((skill) => (
+                          <span
+                            key={`${volunteer.id}-${skill}`}
+                            className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm font-semibold text-[#1D9E75]">{Math.round(volunteer.performance_score || 0)}</td>
+                    <td className="px-4 py-3">
+                      <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(volunteer.availability)}
+                          onChange={(event) =>
+                            availabilityMutation.mutate({
+                              id: volunteer.id,
+                              availability: event.target.checked,
+                            })
+                          }
+                          disabled={isAvailabilityPending || isDeletePending}
+                          className="h-4 w-4 accent-[#1D9E75]"
+                        />
+                        {volunteer.availability ? "Available" : "Unavailable"}
+                      </label>
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const proceed = window.confirm(
+                            `Remove ${volunteer.name} from active roster? This sets availability to false.`,
+                          );
+                          if (proceed) {
+                            deleteMutation.mutate(volunteer.id);
+                          }
+                        }}
+                        disabled={isAvailabilityPending || isDeletePending}
+                        className="rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isDeletePending ? "Removing..." : "Delete"}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </section>
+      )}
+    </div>
+  );
+}
