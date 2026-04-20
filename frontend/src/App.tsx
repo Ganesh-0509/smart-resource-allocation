@@ -174,7 +174,7 @@ function Layout() {
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900">
       <header className="sticky top-0 z-40 border-b border-emerald-100 bg-white/95 backdrop-blur">
-        <div className="mx-auto w-full max-w-6xl px-4 py-3 sm:px-6 lg:px-8">
+        <div className="w-full px-4 py-3 sm:px-6 lg:px-8">
           <div className="md:hidden">
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
@@ -336,19 +336,19 @@ function Layout() {
               bannerVisible ? "translate-y-0 opacity-100" : "-translate-y-1 opacity-0",
             ].join(" ")}
           >
-            <div className="mx-auto w-full max-w-6xl px-4 py-1.5 text-xs font-medium sm:px-6 lg:px-8 sm:text-sm">
+            <div className="w-full px-4 py-1.5 text-xs font-medium sm:px-6 lg:px-8 sm:text-sm">
               You are viewing as {currentRoleMeta.label} - {currentRoleMeta.description}
             </div>
           </div>
         )}
       </header>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+      <main className="w-full flex-1 px-4 py-8 sm:px-6 lg:px-8">
         <Outlet />
       </main>
 
       <footer className="border-t border-emerald-100 bg-white">
-        <div className="mx-auto w-full max-w-6xl px-4 py-4 text-sm text-slate-600 sm:px-6 lg:px-8">
+        <div className="w-full px-4 py-4 text-sm text-slate-600 sm:px-6 lg:px-8">
           Built for India 🇮🇳
         </div>
       </footer>
