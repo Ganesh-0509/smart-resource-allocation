@@ -63,8 +63,30 @@ export interface Assignment {
   assigned_by: string;
   assigned_at?: string;
   completed_at?: string | null;
+  outcome?: string | null;
+  status: string;
+  sla_deadline?: string | null;
+  sla_hours?: number;
+  sla_breached?: boolean;
+  check_in_time?: string | null;
+  check_out_time?: string | null;
+  check_in_lat?: number | null;
+  check_in_lng?: number | null;
+  check_out_lat?: number | null;
+  check_out_lng?: number | null;
+  escalated_to?: string | null;
+  escalation_reason?: string | null;
+  notes?: string | null;
   task?: Task;
   tasks?: Task;
+  volunteer?: Volunteer;
+  volunteers?: Volunteer;
+}
+
+export interface AssignTaskResponse {
+  message: string;
+  task: Task;
+  sms_sent: boolean;
 }
 
 export interface VolunteerMatch extends Volunteer {
@@ -107,6 +129,8 @@ export interface OCRResult {
   urgency_score: number;
   ward: string;
   district: string;
+  lat: number;
+  lng: number;
   household_count: number;
   required_skills: string[];
   summary: string;

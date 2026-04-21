@@ -1,7 +1,7 @@
 import axios from "axios";
 
 import type {
-  Assignment,
+  AssignTaskResponse,
   DashboardActivity,
   DashboardStats,
   HeatmapPoint,
@@ -22,6 +22,8 @@ type ApiErrorPayload = {
   detail?: string | { message?: string } | Array<{ msg?: string } | string>;
   message?: string;
 };
+
+type HeatmapStatusFilter = "open" | "all";
 
 function toApiError(error: unknown): Error {
   if (axios.isAxiosError<ApiErrorPayload>(error)) {
@@ -118,9 +120,9 @@ export async function assignVolunteer(
   taskId: string,
   volunteerId: string,
   assignedBy: string,
-): Promise<Assignment> {
+): Promise<AssignTaskResponse> {
   try {
-    const response = await api.post<Assignment>(
+    const response = await api.post<AssignTaskResponse>(
       `/api/tasks/${taskId}/assign`,
       {
         volunteer_id: volunteerId,
@@ -156,9 +158,11 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   }
 }
 
-export async function getHeatmapData(): Promise<HeatmapPoint[]> {
+export async function getHeatmapData(status: HeatmapStatusFilter = "open"): Promise<HeatmapPoint[]> {
   try {
-    const response = await api.get<HeatmapPoint[]>("/api/dashboard/heatmap");
+    const response = await api.get<HeatmapPoint[]>("/api/dashboard/heatmap", {
+      params: { status },
+    });
     return response.data;
   } catch (error) {
     throw toApiError(error);

@@ -132,8 +132,8 @@ export default function NeedHeatmap() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("open");
 
   const { data, isLoading, isError, error, isFetching, refetch } = useQuery<HeatmapPoint[]>({
-    queryKey: ["dashboard-heatmap"],
-    queryFn: getHeatmapData,
+    queryKey: ["dashboard-heatmap", statusFilter],
+    queryFn: () => getHeatmapData(statusFilter),
     refetchInterval: 30_000,
   });
 

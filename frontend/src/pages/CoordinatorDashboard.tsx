@@ -205,8 +205,12 @@ export default function CoordinatorDashboard() {
   const assignMutation = useMutation({
     mutationFn: ({ taskId, volunteerId }: { taskId: string; volunteerId: string }) =>
       assignVolunteer(taskId, volunteerId, "coordinator"),
-    onSuccess: async (_, variables) => {
-      toast.success("Task assigned! SMS sent to volunteer.");
+    onSuccess: async (result, variables) => {
+      if (result.sms_sent) {
+        toast.success("Task assigned and SMS sent to volunteer.");
+      } else {
+        toast.success("Task assigned. SMS notification was not sent.");
+      }
 
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["dashboard-tasks"] }),

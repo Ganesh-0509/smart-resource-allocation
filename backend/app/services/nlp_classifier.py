@@ -39,7 +39,8 @@ _BASE_PROMPT = """Extract from the following community field report:
 3. required_skills: list from [nutrition, medical, education, logistics, counselling, construction, water_sanitation, livelihood]
 4. household_count: number of affected families (integer, default 1 if not mentioned)
 5. ward: location/ward/village name if mentioned (string or null)
-6. summary: one sentence describing the need in English
+6. district: district name if mentioned (string or null)
+7. summary: one sentence describing the need in English
 
 Always respond in valid JSON only. No markdown. No explanation.
 """
@@ -50,6 +51,7 @@ _DEFAULT_RESULT = {
     "required_skills": [],
     "household_count": 1,
     "ward": None,
+    "district": None,
     "summary": "Need report could not be classified automatically.",
 }
 
@@ -66,6 +68,7 @@ def _fallback_result(text: str) -> dict[str, Any]:
         "required_skills": [],
         "household_count": 1,
         "ward": None,
+        "district": None,
         "summary": summary,
     }
 
@@ -121,6 +124,13 @@ def _sanitize_result(payload: dict[str, Any]) -> dict[str, Any]:
     else:
         ward_cleaned = str(ward_raw).strip()
         result["ward"] = ward_cleaned if ward_cleaned and ward_cleaned.lower() != "null" else None
+
+    district_raw = payload.get("district", None)
+    if district_raw is None:
+        result["district"] = None
+    else:
+        district_cleaned = str(district_raw).strip()
+        result["district"] = district_cleaned if district_cleaned and district_cleaned.lower() != "null" else None
 
     summary_raw = payload.get("summary", "")
     summary = str(summary_raw).strip()

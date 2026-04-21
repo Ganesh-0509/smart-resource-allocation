@@ -217,6 +217,10 @@ class TaskAssign(BaseModel):
         ...,
         description="Name or identifier of the user assigning the task.",
     )
+    sla_hours: Optional[int] = Field(
+        default=24,
+        description="Optional SLA in hours for this assignment. Defaults to 24 hours."
+    )
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -224,6 +228,7 @@ class TaskAssign(BaseModel):
                 {
                     "volunteer_id": "cf0dd7f7-f42f-43d0-a84f-4ca2510dbd67",
                     "assigned_by": "district_coordinator_01",
+                    "sla_hours": 24,
                 }
             ]
         }

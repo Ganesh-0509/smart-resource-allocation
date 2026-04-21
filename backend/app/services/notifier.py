@@ -21,11 +21,11 @@ def _twilio_configured() -> bool:
 
 
 async def _send_sms(to_phone: str, message: str) -> bool:
-    """Send an SMS via Twilio, or print in development if Twilio is not configured."""
+    """Send an SMS via Twilio and report delivery attempt status."""
     if not _twilio_configured():
-        print(f"[SMS-DEV] To: {to_phone} | Message: {message}")
-        logger.info("Twilio not configured. Printed SMS to console instead.")
-        return True
+        logger.warning("Twilio not configured. SMS skipped for %s.", to_phone)
+        logger.debug("Skipped SMS content: %s", message)
+        return False
 
     sid = os.getenv("TWILIO_SID")
     token = os.getenv("TWILIO_TOKEN")

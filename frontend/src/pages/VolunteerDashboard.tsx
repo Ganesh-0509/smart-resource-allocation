@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast, { Toaster } from "react-hot-toast";
 
-import { completeTask } from "../api/tasks";
 import { getVolunteer, getVolunteerTasks, updateAvailability } from "../api/volunteers";
+import { acceptAssignment, declineAssignment, checkInAssignment, checkOutAssignment } from "../api/assignments";
 import UrgencyBadge from "../components/UrgencyBadge";
 import type { Assignment, Task, Volunteer } from "../types";
 
@@ -151,15 +151,58 @@ export default function VolunteerDashboard() {
     },
   });
 
-  const completeTaskMutation = useMutation({
-    mutationFn: (taskId: string) => completeTask(taskId),
+  const acceptAssignmentMutation = useMutation({
+    mutationFn: (assignmentId: string) => acceptAssignment(assignmentId),
     onSuccess: () => {
-      toast.success("Task completed successfully!");
+      toast.success("Assignment accepted!");
+      queryClient.invalidateQueries({ queryKey: ["volunteer-tasks", volunteerId] });
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to accept assignment.");
+    },
+  });
+
+  const declineAssignmentMutation = useMutation({
+    mutationFn: (assignmentId: string) => declineAssignment(assignmentId, "Declined by volunteer"),
+    onSuccess: () => {
+      toast.success("Assignment declined.");
+      queryClient.invalidateQueries({ queryKey: ["volunteer-tasks", volunteerId] });
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to decline assignment.");
+    },
+  });
+
+  const checkInMutation = useMutation({
+    mutationFn: async (assignmentId: string) => {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+      });
+      return checkInAssignment(assignmentId, position.coords.latitude, position.coords.longitude);
+    },
+    onSuccess: () => {
+      toast.success("Checked in successfully!");
+      queryClient.invalidateQueries({ queryKey: ["volunteer-tasks", volunteerId] });
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to check in.");
+    },
+  });
+
+  const checkOutMutation = useMutation({
+    mutationFn: async (assignmentId: string) => {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+      });
+      return checkOutAssignment(assignmentId, position.coords.latitude, position.coords.longitude);
+    },
+    onSuccess: () => {
+      toast.success("Checked out and task completed!");
       queryClient.invalidateQueries({ queryKey: ["volunteer-tasks", volunteerId] });
       queryClient.invalidateQueries({ queryKey: ["volunteer-profile", volunteerId] });
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to mark task complete.");
+      toast.error(error instanceof Error ? error.message : "Failed to check out.");
     },
   });
 
@@ -168,7 +211,7 @@ export default function VolunteerDashboard() {
   const activeRows = useMemo(
     () =>
       rows
-        .filter((row) => row.task.status === "assigned")
+        .filter((row) => row.assignment.status !== "completed" && row.assignment.status !== "declined")
         .sort((a, b) => b.task.urgency_score - a.task.urgency_score),
     [rows],
   );
@@ -176,7 +219,7 @@ export default function VolunteerDashboard() {
   const completedRows = useMemo(
     () =>
       rows
-        .filter((row) => row.task.status === "completed")
+        .filter((row) => row.assignment.status === "completed")
         .sort((a, b) => {
           const first = new Date(a.assignment.completed_at || a.task.created_at).getTime();
           const second = new Date(b.assignment.completed_at || b.task.created_at).getTime();
@@ -338,22 +381,58 @@ export default function VolunteerDashboard() {
                       <div>
                         <h3 className="text-base font-semibold text-slate-900">{row.task.title}</h3>
                         <p className="mt-1 text-sm text-slate-600">{row.task.ward}</p>
+                        <p className="mt-1 text-xs text-slate-500">Status: {row.assignment.status}</p>
                       </div>
                       <UrgencyBadge score={row.task.urgency_score} />
                     </div>
 
                     <p className="mt-3 text-xs text-slate-500">Assigned: {formatDateTime(row.assignment.assigned_at || row.task.created_at)}</p>
+                    {row.assignment.check_in_time && (
+                      <p className="mt-1 text-xs text-slate-500">Checked in: {formatDateTime(row.assignment.check_in_time)}</p>
+                    )}
 
-                    <button
-                      type="button"
-                      onClick={() => completeTaskMutation.mutate(row.task.id)}
-                      disabled={completeTaskMutation.isPending && completeTaskMutation.variables === row.task.id}
-                      className="mt-4 inline-flex items-center rounded-md bg-[#1D9E75] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#177f5e] disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {completeTaskMutation.isPending && completeTaskMutation.variables === row.task.id
-                        ? "Marking..."
-                        : "Mark Complete"}
-                    </button>
+                    <div className="mt-4 flex gap-2">
+                      {row.assignment.status === "assigned" && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => acceptAssignmentMutation.mutate(row.assignment.id)}
+                            disabled={acceptAssignmentMutation.isPending}
+                            className="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => declineAssignmentMutation.mutate(row.assignment.id)}
+                            disabled={declineAssignmentMutation.isPending}
+                            className="inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Decline
+                          </button>
+                        </>
+                      )}
+                      {row.assignment.status === "accepted" && !row.assignment.check_in_time && (
+                        <button
+                          type="button"
+                          onClick={() => checkInMutation.mutate(row.assignment.id)}
+                          disabled={checkInMutation.isPending}
+                          className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Check In
+                        </button>
+                      )}
+                      {row.assignment.status === "accepted" && row.assignment.check_in_time && !row.assignment.check_out_time && (
+                        <button
+                          type="button"
+                          onClick={() => checkOutMutation.mutate(row.assignment.id)}
+                          disabled={checkOutMutation.isPending}
+                          className="inline-flex items-center rounded-md bg-[#1D9E75] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#177f5e] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Check Out
+                        </button>
+                      )}
+                    </div>
                   </article>
                 ))}
               </div>

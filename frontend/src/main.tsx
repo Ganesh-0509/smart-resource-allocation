@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 import App from "./App.tsx";
-import { RoleProvider } from "./context/RoleContext";
+import { RoleProvider } from "./context/RoleContext.tsx";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -18,11 +18,11 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
-      <RoleProvider>
-        <QueryClientProvider client={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <RoleProvider>
           <App />
-        </QueryClientProvider>
-      </RoleProvider>
+        </RoleProvider>
+      </QueryClientProvider>
     </BrowserRouter>
   </StrictMode>,
 );

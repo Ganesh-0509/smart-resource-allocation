@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 from uuid import UUID
 
@@ -249,13 +249,32 @@ async def assign_task(id: UUID, assign_data: TaskAssign):
         # 1. Update task status
         update_task = supabase.table("tasks").update({"status": TaskStatus.ASSIGNED.value}).eq("id", str(id)).execute()
         
-        # 2. Create assignment record
+        # 2. Create assignment record with SLA deadline (default 24h unless provided)
+        sla_hours = getattr(assign_data, "sla_hours", None) or 24
+        sla_deadline = (datetime.now(timezone.utc) + timedelta(hours=int(sla_hours))).isoformat()
+
         assignment_payload = {
             "task_id": str(id),
             "volunteer_id": str(assign_data.volunteer_id),
             "assigned_by": assign_data.assigned_by,
+            "sla_hours": int(sla_hours),
+            "sla_deadline": sla_deadline,
         }
-        supabase.table("assignments").insert(assignment_payload).execute()
+        insert_res = supabase.table("assignments").insert(assignment_payload).execute()
+
+        # Insert initial assignment history entry
+        try:
+            if insert_res.data and len(insert_res.data) > 0:
+                created_assignment = insert_res.data[0]
+                supabase.table("assignment_history").insert({
+                    "assignment_id": created_assignment.get("id"),
+                    "old_status": None,
+                    "new_status": created_assignment.get("status", "assigned"),
+                    "changed_by": assign_data.assigned_by,
+                }).execute()
+        except Exception:
+            # Non-fatal - continue
+            pass
 
         # 3. Notify volunteer via SMS (non-blocking for assignment success)
         sms_sent = False
@@ -402,16 +421,16 @@ async def get_dashboard_stats():
 
 
 @router.get("/api/dashboard/heatmap", response_model=List[HeatmapData], tags=["dashboard"])
-async def get_dashboard_heatmap():
-    """Retrieve geographical distributions for open tasks."""
+async def get_dashboard_heatmap(
+    status: str = Query("open", pattern="^(open|all)$", description="open or all"),
+):
+    """Retrieve geographical distributions for task locations."""
     try:
-        # Only open ones
-        response = (
-            supabase.table("tasks")
-            .select("lat, lng, urgency_score, title, ward, need_type, status")
-            .eq("status", TaskStatus.OPEN.value)
-            .execute()
-        )
+        query = supabase.table("tasks").select("lat, lng, urgency_score, title, ward, need_type, status")
+        if status == "open":
+            query = query.eq("status", TaskStatus.OPEN.value)
+
+        response = query.execute()
         return response.data
     except Exception as e:
         logger.error(f"Error fetching heatmap data: {e}")

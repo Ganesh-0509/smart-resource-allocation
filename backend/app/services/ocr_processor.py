@@ -11,6 +11,49 @@ from app.services.nlp_classifier import classify_need
 
 logger = logging.getLogger(__name__)
 
+_DISTRICT_COORDINATES: dict[str, tuple[float, float]] = {
+    "Ariyalur": (11.1398, 79.0756),
+    "Chengalpattu": (12.6819, 79.9888),
+    "Chennai": (13.0827, 80.2707),
+    "Coimbatore": (11.0168, 76.9558),
+    "Cuddalore": (11.7447, 79.7680),
+    "Dharmapuri": (12.1277, 78.1579),
+    "Dindigul": (10.3673, 77.9803),
+    "Erode": (11.3410, 77.7172),
+    "Kallakurichi": (11.7390, 78.9637),
+    "Kanchipuram": (12.8342, 79.7036),
+    "Kanyakumari": (8.0883, 77.5385),
+    "Karur": (10.9601, 78.0766),
+    "Krishnagiri": (12.5266, 78.2137),
+    "Madurai": (9.9252, 78.1198),
+    "Mayiladuthurai": (11.1035, 79.6550),
+    "Nagapattinam": (10.7656, 79.8428),
+    "Namakkal": (11.2189, 78.1674),
+    "Nilgiris": (11.4064, 76.6932),
+    "Perambalur": (11.2333, 78.8833),
+    "Pudukkottai": (10.3833, 78.8000),
+    "Ramanathapuram": (9.3639, 78.8395),
+    "Ranipet": (12.9273, 79.3335),
+    "Salem": (11.6643, 78.1460),
+    "Sivaganga": (9.8470, 78.4836),
+    "Tenkasi": (8.9592, 77.3152),
+    "Thanjavur": (10.7867, 79.1378),
+    "Theni": (10.0104, 77.4768),
+    "Thoothukudi": (8.7642, 78.1348),
+    "Tiruchirappalli": (10.7905, 78.7047),
+    "Tirunelveli": (8.7139, 77.7567),
+    "Tirupattur": (12.4950, 78.5680),
+    "Tiruppur": (11.1085, 77.3411),
+    "Tiruvallur": (13.1439, 79.9089),
+    "Tiruvannamalai": (12.2253, 79.0747),
+    "Tiruvarur": (10.7713, 79.6368),
+    "Vellore": (12.9165, 79.1325),
+    "Viluppuram": (11.9390, 79.4861),
+    "Virudhunagar": (9.5841, 77.9579),
+}
+
+_DEFAULT_COORDINATES = _DISTRICT_COORDINATES["Madurai"]
+
 
 def _fallback_result() -> dict[str, Any]:
     return {
@@ -29,6 +72,27 @@ def _detect_language(text: str) -> str:
     if tamil_chars > english_chars:
         return "tam"
     return "eng"
+
+
+def _to_float(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _resolve_coordinates(lat: Any, lng: Any, district: Any) -> tuple[float, float]:
+    parsed_lat = _to_float(lat, 0.0)
+    parsed_lng = _to_float(lng, 0.0)
+
+    if abs(parsed_lat) > 0.0001 or abs(parsed_lng) > 0.0001:
+        return parsed_lat, parsed_lng
+
+    district_name = str(district or "").strip()
+    if district_name in _DISTRICT_COORDINATES:
+        return _DISTRICT_COORDINATES[district_name]
+
+    return _DEFAULT_COORDINATES
 
 
 def _deskew_with_hough(binary_image: np.ndarray) -> np.ndarray:
@@ -144,6 +208,7 @@ async def process_survey(image_bytes: bytes) -> dict[str, Any]:
     ocr_result = extract_text(image_bytes)
 
     if ocr_result.get("ocr_failed"):
+        default_lat, default_lng = _DEFAULT_COORDINATES
         return {
             "raw_text": "",
             "confidence": 0.0,
@@ -154,9 +219,9 @@ async def process_survey(image_bytes: bytes) -> dict[str, Any]:
             "description": "",
             "urgency_score": 0,
             "ward": "",
-            "district": "",
-            "lat": 0.0,
-            "lng": 0.0,
+            "district": "Madurai",
+            "lat": default_lat,
+            "lng": default_lng,
             "required_skills": [],
             "household_count": 1,
             "source": "ocr",
@@ -175,12 +240,18 @@ async def process_survey(image_bytes: bytes) -> dict[str, Any]:
             "required_skills": [],
             "household_count": 1,
             "ward": None,
+            "district": "Madurai",
             "summary": "Need report could not be classified automatically.",
         }
 
     summary = str(classification.get("summary") or "Community need report")
     ward = classification.get("ward")
     district = classification.get("district") if isinstance(classification, dict) else None
+    resolved_lat, resolved_lng = _resolve_coordinates(
+        lat=classification.get("lat") if isinstance(classification, dict) else None,
+        lng=classification.get("lng") if isinstance(classification, dict) else None,
+        district=district,
+    )
 
     try:
         urgency_score = int(classification.get("urgency_score", 50))
@@ -209,8 +280,8 @@ async def process_survey(image_bytes: bytes) -> dict[str, Any]:
         "urgency_score": urgency_score,
         "ward": str(ward) if ward else "",
         "district": str(district) if district else "Madurai",
-        "lat": 0.0,
-        "lng": 0.0,
+        "lat": resolved_lat,
+        "lng": resolved_lng,
         "required_skills": required_skills,
         "household_count": household_count,
         "source": "ocr",

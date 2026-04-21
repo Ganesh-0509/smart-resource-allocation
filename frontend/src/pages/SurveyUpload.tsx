@@ -16,8 +16,8 @@ type SurveyFormState = {
   household_count: number;
   required_skills: VolunteerSkill[];
   description: string;
-  lat: number;
-  lng: number;
+  lat: number | null;
+  lng: number | null;
 };
 
 const skillOptions: Array<{ value: VolunteerSkill; label: string }> = [
@@ -40,6 +40,75 @@ const needTypeOptions: Array<{ value: TaskNeedType; label: string }> = [
   { value: "livelihood", label: "Livelihood" },
   { value: "other", label: "Other" },
 ];
+
+const districtCoordinates: Record<string, { lat: number; lng: number }> = {
+  Ariyalur: { lat: 11.1398, lng: 79.0756 },
+  Chengalpattu: { lat: 12.6819, lng: 79.9888 },
+  Chennai: { lat: 13.0827, lng: 80.2707 },
+  Coimbatore: { lat: 11.0168, lng: 76.9558 },
+  Cuddalore: { lat: 11.7447, lng: 79.768 },
+  Dharmapuri: { lat: 12.1277, lng: 78.1579 },
+  Dindigul: { lat: 10.3673, lng: 77.9803 },
+  Erode: { lat: 11.341, lng: 77.7172 },
+  Kallakurichi: { lat: 11.739, lng: 78.9637 },
+  Kanchipuram: { lat: 12.8342, lng: 79.7036 },
+  Kanyakumari: { lat: 8.0883, lng: 77.5385 },
+  Karur: { lat: 10.9601, lng: 78.0766 },
+  Krishnagiri: { lat: 12.5266, lng: 78.2137 },
+  Madurai: { lat: 9.9252, lng: 78.1198 },
+  Mayiladuthurai: { lat: 11.1035, lng: 79.655 },
+  Nagapattinam: { lat: 10.7656, lng: 79.8428 },
+  Namakkal: { lat: 11.2189, lng: 78.1674 },
+  Nilgiris: { lat: 11.4064, lng: 76.6932 },
+  Perambalur: { lat: 11.2333, lng: 78.8833 },
+  Pudukkottai: { lat: 10.3833, lng: 78.8 },
+  Ramanathapuram: { lat: 9.3639, lng: 78.8395 },
+  Ranipet: { lat: 12.9273, lng: 79.3335 },
+  Salem: { lat: 11.6643, lng: 78.146 },
+  Sivaganga: { lat: 9.847, lng: 78.4836 },
+  Tenkasi: { lat: 8.9592, lng: 77.3152 },
+  Thanjavur: { lat: 10.7867, lng: 79.1378 },
+  Theni: { lat: 10.0104, lng: 77.4768 },
+  Thoothukudi: { lat: 8.7642, lng: 78.1348 },
+  Tiruchirappalli: { lat: 10.7905, lng: 78.7047 },
+  Tirunelveli: { lat: 8.7139, lng: 77.7567 },
+  Tirupattur: { lat: 12.495, lng: 78.568 },
+  Tiruppur: { lat: 11.1085, lng: 77.3411 },
+  Tiruvallur: { lat: 13.1439, lng: 79.9089 },
+  Tiruvannamalai: { lat: 12.2253, lng: 79.0747 },
+  Tiruvarur: { lat: 10.7713, lng: 79.6368 },
+  Vellore: { lat: 12.9165, lng: 79.1325 },
+  Viluppuram: { lat: 11.939, lng: 79.4861 },
+  Virudhunagar: { lat: 9.5841, lng: 77.9579 },
+};
+
+const defaultSurveyCoordinates = districtCoordinates.Madurai;
+
+function parseOptionalNumber(rawValue: string): number | null {
+  const trimmed = rawValue.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function resolveCoordinates(lat: number | null, lng: number | null, district: string): { lat: number; lng: number } {
+  const hasManualCoordinates =
+    lat !== null && lng !== null && (Math.abs(lat) > 0.0001 || Math.abs(lng) > 0.0001);
+
+  if (hasManualCoordinates) {
+    return { lat, lng };
+  }
+
+  const districtCenter = districtCoordinates[district.trim()];
+  if (districtCenter) {
+    return districtCenter;
+  }
+
+  return defaultSurveyCoordinates;
+}
 
 function toTaskNeedType(value?: string): TaskNeedType {
   if (
@@ -181,10 +250,12 @@ export default function SurveyUpload() {
     household_count: 1,
     required_skills: [],
     description: "",
-    lat: 0,
-    lng: 0,
+    lat: defaultSurveyCoordinates.lat,
+    lng: defaultSurveyCoordinates.lng,
   });
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [geoMessage, setGeoMessage] = useState<string>("");
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
@@ -216,10 +287,11 @@ export default function SurveyUpload() {
         household_count: Math.max(1, Number(result.household_count || 1)),
         required_skills: toSkillList(result.required_skills),
         description: result.summary || "",
-        lat: 0,
-        lng: 0,
+        lat: Number.isFinite(result.lat) ? Number(result.lat) : null,
+        lng: Number.isFinite(result.lng) ? Number(result.lng) : null,
       });
       setErrorMessage("");
+      setGeoMessage("");
       setStep(2);
     },
     onError: (error) => {
@@ -285,9 +357,10 @@ export default function SurveyUpload() {
       household_count: 1,
       required_skills: [],
       description: "",
-      lat: 0,
-      lng: 0,
+      lat: defaultSurveyCoordinates.lat,
+      lng: defaultSurveyCoordinates.lng,
     });
+    setGeoMessage("");
   }
 
   function toggleSkill(skill: VolunteerSkill) {
@@ -312,6 +385,48 @@ export default function SurveyUpload() {
     processMutation.mutate(selectedFile);
   }
 
+  function handleUseMyLocation() {
+    setGeoMessage("");
+
+    if (!navigator.geolocation) {
+      setGeoMessage("Geolocation is not supported in this browser.");
+      return;
+    }
+
+    setGeoLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setFormState((current) => ({
+          ...current,
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        }));
+        setGeoMessage("Current location captured.");
+        setGeoLoading(false);
+      },
+      (error) => {
+        setGeoMessage(error.message || "Unable to fetch location.");
+        setGeoLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 15000 },
+    );
+  }
+
+  function applyDistrictCenter() {
+    const districtCenter = districtCoordinates[formState.district.trim()];
+    if (!districtCenter) {
+      setGeoMessage("District not recognized. Using default fallback during save.");
+      return;
+    }
+
+    setFormState((current) => ({
+      ...current,
+      lat: districtCenter.lat,
+      lng: districtCenter.lng,
+    }));
+    setGeoMessage("Applied district center coordinates.");
+  }
+
   function handleConfirmSave() {
     if (!uploadResult) {
       setErrorMessage("Survey upload details are missing. Please process again.");
@@ -323,6 +438,8 @@ export default function SurveyUpload() {
       return;
     }
 
+    const resolvedCoordinates = resolveCoordinates(formState.lat, formState.lng, formState.district);
+
     const payload: TaskCreate = {
       title: formState.title.trim(),
       need_type: formState.need_type,
@@ -330,8 +447,8 @@ export default function SurveyUpload() {
       urgency_score: Math.max(0, Math.min(100, formState.urgency_score)),
       ward: formState.ward.trim(),
       district: formState.district.trim() || "Madurai",
-      lat: formState.lat,
-      lng: formState.lng,
+      lat: resolvedCoordinates.lat,
+      lng: resolvedCoordinates.lng,
       required_skills: formState.required_skills,
       household_count: Math.max(1, formState.household_count),
       source: "survey",
@@ -439,7 +556,7 @@ export default function SurveyUpload() {
                 </button>
               ) : null}
               <p className="mt-2">
-                <Link to="/coordinator" className="font-semibold underline">
+                <Link to="/tasks/new" className="font-semibold underline">
                   Open manual task form
                 </Link>
               </p>
@@ -531,6 +648,63 @@ export default function SurveyUpload() {
                     className={fieldClassName}
                   />
                 </div>
+              </div>
+
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-slate-700">Task Location</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={handleUseMyLocation}
+                      disabled={geoLoading}
+                      className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60"
+                    >
+                      {geoLoading ? "Locating..." : "Use my location"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={applyDistrictCenter}
+                      className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                    >
+                      Use district center
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <FieldLabel label="Latitude" confidence={confidence} />
+                    <input
+                      type="number"
+                      step="any"
+                      value={formState.lat ?? ""}
+                      onChange={(event) =>
+                        setFormState((current) => ({ ...current, lat: parseOptionalNumber(event.target.value) }))
+                      }
+                      className={fieldClassName}
+                      placeholder="e.g. 9.9252"
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel label="Longitude" confidence={confidence} />
+                    <input
+                      type="number"
+                      step="any"
+                      value={formState.lng ?? ""}
+                      onChange={(event) =>
+                        setFormState((current) => ({ ...current, lng: parseOptionalNumber(event.target.value) }))
+                      }
+                      className={fieldClassName}
+                      placeholder="e.g. 78.1198"
+                    />
+                  </div>
+                </div>
+
+                <p className="mt-2 text-xs text-slate-500">
+                  If coordinates are empty, the district center will be used automatically.
+                </p>
+                {geoMessage && <p className="mt-1 text-xs text-slate-600">{geoMessage}</p>}
               </div>
 
               <div>

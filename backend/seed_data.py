@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+import os
 from typing import Any
 
 from app.db.supabase_client import supabase
@@ -12,6 +13,19 @@ DELETE_ORDER = [
     "tasks",
     "volunteers",
 ]
+
+
+class SeedGuardError(RuntimeError):
+    """Raised when development seed execution is not explicitly enabled."""
+
+
+def assert_dev_seed_enabled() -> None:
+    """Require an explicit flag to prevent accidental production seeding."""
+    flag = os.getenv("ALLOW_DEV_SEED", "").strip().lower()
+    if flag not in {"1", "true", "yes"}:
+        raise SeedGuardError(
+            "Refusing to run seed script. Set ALLOW_DEV_SEED=true (or 1/yes) for local development."
+        )
 
 
 def iso_now_minus(days: int = 0, hours: int = 0) -> str:
@@ -352,7 +366,8 @@ def seed_activity_log(task_ids: dict[str, str], volunteer_ids: dict[str, str]) -
 
 
 def main() -> None:
-    print("Starting Supabase seed for Namma Connect demo data...")
+    assert_dev_seed_enabled()
+    print("Starting Supabase development seed for Namma Connect...")
 
     print("\n[STEP] Clearing tables in FK-safe order...")
     for table in DELETE_ORDER:
@@ -370,8 +385,12 @@ def main() -> None:
     print("\n[STEP] Inserting activity logs...")
     seed_activity_log(task_ids=task_ids, volunteer_ids=volunteer_ids)
 
-    print(f"Seed complete! {len(inserted_volunteers)} volunteers, {len(inserted_tasks)} tasks inserted.")
+    print(f"Development seed complete: {len(inserted_volunteers)} volunteers, {len(inserted_tasks)} tasks inserted.")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SeedGuardError as exc:
+        print(f"[ERROR] {exc}")
+        raise SystemExit(1)

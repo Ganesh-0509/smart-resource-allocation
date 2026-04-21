@@ -52,6 +52,8 @@ class OCRUploadResponse(BaseModel):
     urgency_score: int
     ward: str
     district: str
+    lat: float
+    lng: float
     household_count: int
     required_skills: list[str]
     summary: str
@@ -92,6 +94,13 @@ def _upload_image_to_storage(image_bytes: bytes, extension: str, content_type: s
     return path
 
 
+def _to_float(value: object, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
 @router.post("/upload", response_model=OCRUploadResponse)
 async def upload_survey_image(image: UploadFile = File(...)):
     filename = image.filename or ""
@@ -129,7 +138,9 @@ async def upload_survey_image(image: UploadFile = File(...)):
                 "description": "",
                 "urgency_score": 0,
                 "ward": "",
-                "district": "",
+                "district": "Madurai",
+                "lat": 9.9252,
+                "lng": 78.1198,
                 "required_skills": [],
                 "household_count": 1,
                 "summary": "",
@@ -168,6 +179,8 @@ async def upload_survey_image(image: UploadFile = File(...)):
             "urgency_score": int(extracted.get("urgency_score", 0)),
             "ward": extracted.get("ward", ""),
             "district": extracted.get("district", "Madurai"),
+            "lat": _to_float(extracted.get("lat", 9.9252), 9.9252),
+            "lng": _to_float(extracted.get("lng", 78.1198), 78.1198),
             "household_count": int(extracted.get("household_count", 1)),
             "required_skills": required_skills,
             "summary": extracted.get("summary", ""),
