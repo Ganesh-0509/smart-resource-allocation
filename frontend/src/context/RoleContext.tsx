@@ -30,14 +30,14 @@ const ROLE_CONFIG: RoleConfigMap = {
     label: "Coordinator",
     description: "Oversees operations, assigns tasks, and tracks platform-wide progress.",
     homeRoute: "/coordinator",
-    allowedRoutes: ["/", "/coordinator", "/assignments", "/ocr/review", "/analytics", "/batch-matching", "/heatmap"],
+    allowedRoutes: ["/", "/coordinator", "/coordinator/batch-match", "/coordinator/ocr-queue", "/analytics", "/heatmap"],
     color: "bg-green-500",
   },
   volunteer: {
     label: "Volunteer",
     description: "Views personal assignments, updates availability, and completes tasks.",
     homeRoute: "/volunteer/dashboard",
-    allowedRoutes: ["/", "/volunteer/register", "/volunteer/dashboard", "/tasks/new", "/survey/upload"],
+    allowedRoutes: ["/", "/volunteer/register", "/volunteer/dashboard", "/volunteer/schedule", "/volunteer/field-execution", "/tasks/new", "/survey/upload"],
     color: "bg-purple-500",
   },
   fieldworker: {

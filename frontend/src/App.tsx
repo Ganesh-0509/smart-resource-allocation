@@ -11,7 +11,6 @@ import {
 
 import { checkBackendHealth } from "./api/health";
 import AdminPanel from "./pages/AdminPanel";
-import CoordinatorAssignmentBoard from "./pages/CoordinatorAssignmentBoard";
 import CoordinatorDashboard from "./pages/CoordinatorDashboard";
 import LandingPage from "./pages/LandingPage";
 import NeedHeatmap from "./pages/NeedHeatmap";
@@ -20,6 +19,8 @@ import TaskCreate from "./pages/TaskCreate";
 import VolunteerDashboard from "./pages/VolunteerDashboard";
 import VolunteerRegister from "./pages/VolunteerRegister";
 import LoginPage from "./pages/LoginPage";
+import VolunteerSchedulePage from "./pages/VolunteerSchedulePage";
+import VolunteerExecutionPage from "./pages/VolunteerExecutionPage";
 import OCRReviewQueue from "./components/OCRReviewQueue";
 import ImpactDashboard from "./components/ImpactDashboard";
 import BatchMatchingBoard from "./components/BatchMatchingBoard";
@@ -33,15 +34,13 @@ type NavItem = {
 const allNavItems: NavItem[] = [
   { to: "/", label: "Home" },
   { to: "/coordinator", label: "Coordinator" },
-  { to: "/assignments", label: "Assignments" },
-  { to: "/ocr/review", label: "OCR Review" },
+  { to: "/coordinator/batch-match", label: "Batch Matching" },
+  { to: "/coordinator/ocr-queue", label: "OCR Queue" },
   { to: "/analytics", label: "Impact Analytics" },
-  { to: "/batch-matching", label: "Batch Matching" },
-  { to: "/tasks/new", label: "New Task" },
-  { to: "/volunteer/dashboard", label: "Volunteer Dashboard" },
-  { to: "/volunteer/register", label: "Register Volunteer" },
-  { to: "/heatmap", label: "Heatmap" },
-  { to: "/survey/upload", label: "Upload Survey" },
+  { to: "/volunteer/dashboard", label: "Volunteer Profile" },
+  { to: "/volunteer/schedule", label: "Weekly Schedule" },
+  { to: "/volunteer/field-execution", label: "Field Execution" },
+  { to: "/heatmap", label: "Need Heatmap" },
   { to: "/admin", label: "Admin" },
 ];
 
@@ -264,12 +263,13 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/coordinator" element={<ProtectedRoute path="/coordinator"><CoordinatorDashboard /></ProtectedRoute>} />
-        <Route path="/assignments" element={<ProtectedRoute path="/assignments"><CoordinatorAssignmentBoard /></ProtectedRoute>} />
-        <Route path="/ocr/review" element={<ProtectedRoute path="/ocr/review"><OCRReviewQueue /></ProtectedRoute>} />
+        <Route path="/coordinator/batch-match" element={<ProtectedRoute path="/coordinator/batch-match"><BatchMatchingBoard /></ProtectedRoute>} />
+        <Route path="/coordinator/ocr-queue" element={<ProtectedRoute path="/coordinator/ocr-queue"><OCRReviewQueue /></ProtectedRoute>} />
         <Route path="/analytics" element={<ProtectedRoute path="/analytics"><ImpactDashboard /></ProtectedRoute>} />
-        <Route path="/batch-matching" element={<ProtectedRoute path="/batch-matching"><BatchMatchingBoard /></ProtectedRoute>} />
-        <Route path="/volunteer/register" element={<ProtectedRoute path="/volunteer/register"><VolunteerRegister /></ProtectedRoute>} />
         <Route path="/volunteer/dashboard" element={<ProtectedRoute path="/volunteer/dashboard"><VolunteerDashboard /></ProtectedRoute>} />
+        <Route path="/volunteer/schedule" element={<ProtectedRoute path="/volunteer/schedule"><VolunteerSchedulePage /></ProtectedRoute>} />
+        <Route path="/volunteer/field-execution" element={<ProtectedRoute path="/volunteer/field-execution"><VolunteerExecutionPage /></ProtectedRoute>} />
+        <Route path="/volunteer/register" element={<ProtectedRoute path="/volunteer/register"><VolunteerRegister /></ProtectedRoute>} />
         <Route path="/heatmap" element={<ProtectedRoute path="/heatmap"><NeedHeatmap /></ProtectedRoute>} />
         <Route path="/survey/upload" element={<ProtectedRoute path="/survey/upload"><SurveyUpload /></ProtectedRoute>} />
         <Route path="/tasks/new" element={<ProtectedRoute path="/tasks/new"><TaskCreate /></ProtectedRoute>} />

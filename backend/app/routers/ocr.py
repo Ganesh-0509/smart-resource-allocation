@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from app.db.supabase_client import supabase
 from app.models.task import TaskCreate, TaskResponse, TaskStatus
 from app.services.ocr_processor import process_survey
+from app.services.geocoder import ensure_coordinates
 
 logger = logging.getLogger(__name__)
 
@@ -213,6 +214,14 @@ async def confirm_survey_upload(upload_id: UUID, confirmed_task: TaskCreate):
         task_payload["source"] = "survey"
         task_payload["status"] = TaskStatus.OPEN.value
         task_payload["source_image_url"] = image_url
+
+        # Ensure coordinates are not 0,0
+        task_payload["lat"], task_payload["lng"] = ensure_coordinates(
+            task_payload.get("lat"), 
+            task_payload.get("lng"), 
+            task_payload.get("ward"), 
+            task_payload.get("district")
+        )
 
         task_insert = supabase.table("tasks").insert(task_payload).execute()
         if not task_insert.data:

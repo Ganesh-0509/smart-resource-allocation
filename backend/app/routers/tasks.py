@@ -10,6 +10,7 @@ from app.db.supabase_client import supabase
 from app.models.task import NeedType, TaskAssign, TaskCreate, TaskResponse, TaskStatus
 from app.services.matcher import match_volunteers
 from app.services.notifier import send_assignment_sms
+from app.services.geocoder import ensure_coordinates
 
 logger = logging.getLogger(__name__)
 
@@ -151,6 +152,14 @@ async def create_task(task: TaskCreate):
         data = task.model_dump(mode="json")
         # New tasks usually start as open
         data["status"] = TaskStatus.OPEN.value
+        
+        # Ensure coordinates are not 0,0
+        data["lat"], data["lng"] = ensure_coordinates(
+            data.get("lat"), 
+            data.get("lng"), 
+            data.get("ward"), 
+            data.get("district")
+        )
         
         response = supabase.table("tasks").insert(data).execute()
         if not response.data:
