@@ -1,5 +1,20 @@
 @import "tailwindcss";
 
+:root {
+  --saffron: #E8712A;
+  --saffron-light: #F5A26F;
+  --saffron-pale: #FEF0E6;
+  --forest: #1A3C2E;
+  --forest-mid: #2D5E47;
+  --forest-light: #4A8C6A;
+  --forest-pale: #EAF4EE;
+  --cream: #FAF8F3;
+  --warm-white: #FFFDF9;
+  --charcoal: #1C1C1E;
+  --slate: #6B7280;
+  --border: rgba(26,60,46,0.08);
+}
+
 html,
 body,
 #root {
@@ -8,6 +23,12 @@ body,
 
 body {
   margin: 0;
-  font-family: "Poppins", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f8fafc;
+  font-family: 'DM Sans', sans-serif;
+  background-color: var(--cream);
+  color: var(--charcoal);
+  overflow-x: hidden;
+}
+
+h1, h2, h3, .serif {
+  font-family: 'Instrument Serif', serif;
 }

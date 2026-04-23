@@ -65,17 +65,17 @@ function matchesUrgency(task: Task, urgencyFilter: UrgencyTab): boolean {
 function MetricsCard({ label, value, loading }: { label: string; value: number; loading: boolean }) {
   if (loading) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="h-3 w-24 animate-pulse rounded bg-slate-200" />
-        <div className="mt-3 h-8 w-16 animate-pulse rounded bg-slate-200" />
+      <div className="rounded-xl bg-white p-3 border border-slate-100 animate-pulse">
+        <div className="h-2 w-16 rounded bg-slate-50" />
+        <div className="mt-2 h-6 w-10 rounded bg-slate-50" />
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-emerald-100 bg-white p-4 shadow-sm">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-2 text-2xl font-bold text-[#1D9E75]">{value}</p>
+    <div className="rounded-xl bg-white px-4 py-3 shadow-sm border border-[#114B3B]/5 transition-all hover:bg-slate-50/50">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
+      <p className="text-xl font-black text-[#1A3C2E] font-['Instrument_Serif']">{value}</p>
     </div>
   );
 }
@@ -239,116 +239,90 @@ export default function CoordinatorDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <Toaster position="top-right" toastOptions={{ duration: 2600 }} />
 
       {hasQueryError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p>Some dashboard data failed to load. You can continue, or retry now.</p>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow-sm">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-100 text-red-600 font-bold">!</span>
+              <p className="font-medium">System performance is degraded due to missing database metrics.</p>
+            </div>
             <button
               type="button"
               onClick={() => void retryDashboardQueries()}
-              className="rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
+              className="rounded-xl bg-white px-4 py-2 text-xs font-bold uppercase tracking-widest text-red-700 shadow-sm border border-red-100 transition-all hover:bg-red-50"
             >
-              Retry all
+              Retry Connection
             </button>
           </div>
         </div>
       )}
 
+      {/* Slim Top Bar */}
+      <section className="flex flex-wrap items-center justify-between gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:flex sm:items-center">
+          <MetricsCard label="Needs" value={stats?.open_count ?? 0} loading={statsQuery.isLoading} />
+          <MetricsCard label="Missions" value={stats?.in_progress_count ?? 0} loading={statsQuery.isLoading} />
+          <MetricsCard label="Impact" value={stats?.completed_today ?? 0} loading={statsQuery.isLoading} />
+          <MetricsCard label="Field" value={stats?.active_volunteers ?? 0} loading={statsQuery.isLoading} />
+        </div>
+        
+        <div className="flex items-center gap-2 rounded-xl bg-white p-2 border border-slate-200">
+           <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse ring-4 ring-emerald-500/20" />
+           <span className="text-[10px] font-black uppercase tracking-tighter text-slate-500">Live Network Active</span>
+        </div>
+      </section>
+
+      {/* Main Studio Grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        <section className="space-y-4 lg:col-span-5">
-          <div className="grid grid-cols-2 gap-3">
-            <MetricsCard label="Open" value={stats?.open_count ?? 0} loading={statsQuery.isLoading} />
-            <MetricsCard label="In Progress" value={stats?.in_progress_count ?? 0} loading={statsQuery.isLoading} />
-            <MetricsCard label="Completed Today" value={stats?.completed_today ?? 0} loading={statsQuery.isLoading} />
-            <MetricsCard label="Active Volunteers" value={stats?.active_volunteers ?? 0} loading={statsQuery.isLoading} />
-          </div>
-
-          {statsQuery.isError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              <p>{statsQuery.error instanceof Error ? statsQuery.error.message : "Failed to load — Retry"}</p>
-              <button
-                type="button"
-                onClick={() => void statsQuery.refetch()}
-                className="mt-2 rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
-              >
-                Failed to load — Retry
-              </button>
-            </div>
-          )}
-
-          <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-            <div className="flex flex-wrap items-center gap-2">
-              {urgencyTabs.map((tab) => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setUrgencyFilter(tab.key)}
-                  className={[
-                    "rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
-                    urgencyFilter === tab.key
-                      ? "bg-[#1D9E75] text-white"
-                      : "bg-slate-100 text-slate-700 hover:bg-slate-200",
-                  ].join(" ")}
-                >
-                  {tab.label}
-                </button>
-              ))}
-
-              <div className="ml-auto">
-                <select
-                  value={needTypeFilter}
-                  onChange={(event) => setNeedTypeFilter(event.target.value as NeedTypeFilter)}
-                  className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 focus:border-[#1D9E75] focus:outline-none"
-                >
-                  {needTypeOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option === "all" ? "All need types" : option}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-            <div className="mb-2 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-800">Tasks</h2>
-              {tasksQuery.isFetching && <LoadingSpinner label="Refreshing" />}
-            </div>
-
-            <div className="max-h-[60vh] space-y-3 overflow-y-auto pr-1">
-              {tasksQuery.isLoading && (
-                <div className="space-y-2">
-                  <div className="h-24 animate-pulse rounded-xl bg-slate-100" />
-                  <div className="h-24 animate-pulse rounded-xl bg-slate-100" />
-                </div>
-              )}
-
-              {tasksQuery.isError && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                  <p>{tasksQuery.error instanceof Error ? tasksQuery.error.message : "Failed to load — Retry"}</p>
+        
+        {/* Sidebar: Navigation & Discovery */}
+        <aside className="lg:col-span-4 space-y-6">
+          <div className="rounded-2xl bg-white p-5 shadow-[0_10px_40px_rgba(26,60,46,0.03)] border border-[#114B3B]/5">
+            <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Discovery Filter</h2>
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-1.5">
+                {urgencyTabs.map((tab) => (
                   <button
+                    key={tab.key}
                     type="button"
-                    onClick={() => void tasksQuery.refetch()}
-                    className="mt-2 rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
+                    onClick={() => setUrgencyFilter(tab.key)}
+                    className={[
+                      "rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase tracking-tight transition-all",
+                      urgencyFilter === tab.key
+                        ? "bg-[#E8712A] text-white shadow-md shadow-[#E8712A]/20"
+                        : "bg-slate-50 text-slate-400 hover:bg-slate-100",
+                    ].join(" ")}
                   >
-                    Failed to load — Retry
+                    {tab.label}
                   </button>
-                </div>
-              )}
+                ))}
+              </div>
+              <select
+                value={needTypeFilter}
+                onChange={(event) => setNeedTypeFilter(event.target.value as NeedTypeFilter)}
+                className="w-full rounded-xl border border-slate-100 bg-slate-50 px-4 py-2 text-[10px] font-black text-[#1A3C2E] uppercase tracking-wider"
+              >
+                {needTypeOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option === "all" ? "All Needs" : option}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-              {!tasksQuery.isLoading && !filteredTasks.length && (
-                <p className="rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-500">
-                  No tasks found for the selected filters.
-                </p>
-              )}
+            <div className="mt-8">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-[10px] font-black uppercase tracking-widest text-[#1A3C2E]/60 tracking-widest">Active Needs</h2>
+                {tasksQuery.isFetching && <LoadingSpinner label="" />}
+              </div>
 
-              {filteredTasks.map((task) => (
-                <div key={task.id} className="space-y-1">
+              <div className="max-h-[60vh] space-y-3 overflow-y-auto pr-1 flex flex-col gap-2 custom-scrollbar">
+                {filteredTasks.map((task) => (
                   <TaskCard
+                    key={task.id}
                     task={task}
                     isSelected={task.id === selectedTaskId}
                     onSelect={(item) => {
@@ -356,103 +330,76 @@ export default function CoordinatorDashboard() {
                       setShowMobileDetailSheet(true);
                     }}
                   />
-                  <div className="px-1 text-xs text-slate-500">
-                    Status: <span className="font-semibold capitalize text-slate-700">{task.status}</span>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
-        </section>
 
-        <section className="space-y-4 lg:col-span-7">
-          {!selectedTask && (
-            <div className="hidden rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500 shadow-sm md:block">
-              Select a task from the left panel to view details and assign volunteers.
+          <ActivityFeed activities={activities} />
+        </aside>
+
+        {/* Content: Main Field Workspace */}
+        <main className="lg:col-span-8 space-y-6">
+          {!selectedTask ? (
+            <div className="flex h-[70vh] flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white shadow-sm p-12 text-center">
+              <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Select a task to begin mission planning</p>
             </div>
-          )}
-
-          {selectedTask && (
-            <div className="hidden space-y-4 md:block">
-              <article className="rounded-xl border border-emerald-100 bg-white p-5 shadow-sm">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-xl font-semibold text-slate-900">{selectedTask.title}</h2>
-                    <p className="mt-2 text-sm text-slate-600">
-                      {selectedTask.description || "No description available for this task."}
-                    </p>
+          ) : (
+            <div className="flex flex-col min-h-full space-y-6">
+              <article className="rounded-3xl bg-white p-6 shadow-sm border border-[#114B3B]/5 transition-all">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                       <UrgencyBadge score={selectedTask.urgency_score} />
+                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">ID: {selectedTask.id.slice(0,8)}</span>
+                    </div>
+                    <h2 className="text-2xl font-black text-[#1A3C2E] font-['Instrument_Serif']">{selectedTask.title}</h2>
+                    <p className="text-sm text-slate-500 font-medium leading-relaxed max-w-2xl">{selectedTask.description || "No mission brief provided."}</p>
                   </div>
-                  <UrgencyBadge score={selectedTask.urgency_score} />
+                  <button
+                    type="button"
+                    onClick={() => findMatchesMutation.mutate(selectedTask.id)}
+                    disabled={findMatchesMutation.isPending}
+                    className="rounded-xl bg-[#1A3C2E] px-6 py-3 text-xs font-black text-white hover:bg-[#2D5E47] transition-all shadow-lg shadow-[#1A3C2E]/10"
+                  >
+                     {findMatchesMutation.isPending ? "Matching..." : "Locate Field Agents"}
+                  </button>
                 </div>
 
-                <dl className="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                  <div>
-                    <dt className="font-medium text-slate-500">Ward</dt>
-                    <dd className="text-slate-800">{selectedTask.ward || "-"}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-medium text-slate-500">District</dt>
-                    <dd className="text-slate-800">{selectedTask.district || "-"}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-medium text-slate-500">Households</dt>
-                    <dd className="text-slate-800">{selectedTask.household_count ?? 1}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-medium text-slate-500">Urgency Score</dt>
-                    <dd className="text-slate-800">{selectedTask.urgency_score}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-medium text-slate-500">Need Type</dt>
-                    <dd className="capitalize text-slate-800">{selectedTask.need_type}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-medium text-slate-500">Source</dt>
-                    <dd className="capitalize text-slate-800">{selectedTask.source || "manual"}</dd>
-                  </div>
-                </dl>
-
-                <div className="mt-4">
-                  <p className="text-sm font-medium text-slate-500">Required Skills</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {(selectedTask.required_skills || []).map((skill) => (
-                      <span key={skill} className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
+                <div className="mt-6 flex flex-wrap gap-x-12 gap-y-4 border-t border-slate-50 pt-6">
+                   <div>
+                      <p className="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-widest">Region</p>
+                      <p className="text-sm font-bold text-[#1A3C2E]">{selectedTask.ward || "Unassigned"}, {selectedTask.district}</p>
+                   </div>
+                   <div>
+                      <p className="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-widest">Scale</p>
+                      <p className="text-sm font-bold text-[#1A3C2E]">{selectedTask.household_count} Households</p>
+                   </div>
+                   <div>
+                      <p className="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-widest">Need Type</p>
+                      <p className="text-sm font-bold capitalize text-[#1A3C2E]">{selectedTask.need_type}</p>
+                   </div>
+                   <div>
+                      <p className="text-[10px] font-black uppercase text-slate-400 mb-1 tracking-widest">Status</p>
+                      <p className="text-sm font-bold capitalize text-emerald-600">Active {selectedTask.status}</p>
+                   </div>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => findMatchesMutation.mutate(selectedTask.id)}
-                  disabled={findMatchesMutation.isPending}
-                  className="mt-5 inline-flex items-center gap-2 rounded-md bg-[#1D9E75] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#177f5e] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {findMatchesMutation.isPending ? <LoadingSpinner label="Matching..." /> : "Find Best Volunteers"}
-                </button>
               </article>
 
-              <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-base font-semibold text-slate-900">Volunteer Matches</h3>
-                  {findMatchesMutation.isPending && <LoadingSpinner label="Running match" />}
+              <section className="flex-1 flex flex-col rounded-3xl bg-[#FAF8F3] p-6 border border-[#114B3B]/5 shadow-inner">
+                <div className="mb-6 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-black text-[#1A3C2E] uppercase tracking-widest">Field Matches</h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5">Top responders prioritized by skill and distance</p>
+                  </div>
+                  {findMatchesMutation.isPending && <LoadingSpinner label="" />}
                 </div>
-
-                {matchedTaskId !== selectedTask.id && !matches.length && (
-                  <p className="text-sm text-slate-500">Run matching to view top volunteers for this task.</p>
-                )}
-
-                {matchedTaskId === selectedTask.id && !findMatchesMutation.isPending && !matches.length && (
-                  <p className="text-sm text-slate-500">No volunteer matches found for this task.</p>
-                )}
-
-                <div className="space-y-3">
-                  {findMatchesMutation.isPending && (
-                    <>
-                      <div className="h-40 animate-pulse rounded-xl bg-slate-100" />
-                      <div className="h-40 animate-pulse rounded-xl bg-slate-100" />
-                    </>
+                
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[800px] overflow-y-auto pr-1">
+                  {matches.length === 0 && !findMatchesMutation.isPending && (
+                    <div className="md:col-span-2 py-12 text-center text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] border-2 border-dashed border-slate-100 rounded-2xl">
+                      Scanner ready — initiate matching
+                    </div>
                   )}
 
                   {matches.map((volunteer) => (
@@ -460,45 +407,17 @@ export default function CoordinatorDashboard() {
                       key={volunteer.id}
                       volunteer={volunteer}
                       onAssign={(item) => {
-                        if (!selectedTask) {
-                          return;
-                        }
+                        if (!selectedTask) return;
                         assignMutation.mutate({ taskId: selectedTask.id, volunteerId: item.id });
                       }}
-                      isAssigning={
-                        assignMutation.isPending && assignMutation.variables?.volunteerId === volunteer.id
-                      }
+                      isAssigning={assignMutation.isPending && assignMutation.variables?.volunteerId === volunteer.id}
                     />
                   ))}
                 </div>
-              </article>
+              </section>
             </div>
           )}
-
-          <ActivityFeed activities={activities} />
-          {activityQuery.isLoading && (
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="h-5 w-40 animate-pulse rounded bg-slate-200" />
-              <div className="mt-3 space-y-2">
-                <div className="h-12 animate-pulse rounded bg-slate-100" />
-                <div className="h-12 animate-pulse rounded bg-slate-100" />
-                <div className="h-12 animate-pulse rounded bg-slate-100" />
-              </div>
-            </div>
-          )}
-          {activityQuery.isError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              <p>{activityQuery.error instanceof Error ? activityQuery.error.message : "Failed to load — Retry"}</p>
-              <button
-                type="button"
-                onClick={() => void activityQuery.refetch()}
-                className="mt-2 rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100"
-              >
-                Failed to load — Retry
-              </button>
-            </div>
-          )}
-        </section>
+        </main>
       </div>
 
       {selectedTask && showMobileDetailSheet && (

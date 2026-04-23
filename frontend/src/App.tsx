@@ -9,7 +9,6 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import brandLogo from "./assets/namma-connect-logo.svg";
 import { checkBackendHealth } from "./api/health";
 import AdminPanel from "./pages/AdminPanel";
 import CoordinatorAssignmentBoard from "./pages/CoordinatorAssignmentBoard";
@@ -20,7 +19,11 @@ import SurveyUpload from "./pages/SurveyUpload";
 import TaskCreate from "./pages/TaskCreate";
 import VolunteerDashboard from "./pages/VolunteerDashboard";
 import VolunteerRegister from "./pages/VolunteerRegister";
-import { useRole, type Role } from "./context/RoleContext";
+import LoginPage from "./pages/LoginPage";
+import OCRReviewQueue from "./components/OCRReviewQueue";
+import ImpactDashboard from "./components/ImpactDashboard";
+import BatchMatchingBoard from "./components/BatchMatchingBoard";
+import { useRole } from "./context/RoleContext";
 
 type NavItem = {
   to: string;
@@ -31,6 +34,9 @@ const allNavItems: NavItem[] = [
   { to: "/", label: "Home" },
   { to: "/coordinator", label: "Coordinator" },
   { to: "/assignments", label: "Assignments" },
+  { to: "/ocr/review", label: "OCR Review" },
+  { to: "/analytics", label: "Impact Analytics" },
+  { to: "/batch-matching", label: "Batch Matching" },
   { to: "/tasks/new", label: "New Task" },
   { to: "/volunteer/dashboard", label: "Volunteer Dashboard" },
   { to: "/volunteer/register", label: "Register Volunteer" },
@@ -39,23 +45,20 @@ const allNavItems: NavItem[] = [
   { to: "/admin", label: "Admin" },
 ];
 
-function pageLinkClass(isActive: boolean): string {
-  return [
-    "rounded-md px-3 py-2 text-xs font-medium transition-all duration-300 sm:text-sm",
-    isActive
-      ? "bg-[#1D9E75]/10 text-[#1D9E75]"
-      : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
-  ].join(" ");
-}
-
 function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const { currentRole, roleConfig, setRole } = useRole();
+  const navigate = useNavigate();
+  const { currentRole, roleConfig } = useRole();
+
+  const isLandingPage = location.pathname === "/";
+  const isLoginPage = location.pathname === "/login";
+  const isPublicPage = isLandingPage || isLoginPage;
 
   const navItems = allNavItems.filter(item => 
     roleConfig[currentRole].allowedRoutes.includes(item.to)
   );
+  
   const backendHealthQuery = useQuery({
     queryKey: ["backend-health"],
     queryFn: checkBackendHealth,
@@ -69,106 +72,135 @@ function Layout() {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900">
-      <header className="sticky top-0 z-40 border-b border-emerald-100 bg-white/95 backdrop-blur">
-        <div className="w-full px-4 py-3 sm:px-6 lg:px-8">
-          <div className="md:hidden">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3">
-                <NavLink to="/" className="inline-flex items-center gap-2 text-2xl font-bold tracking-tight text-[#1D9E75]">
-                  <img src={brandLogo} alt="Namma Connect logo" className="h-9 w-9 rounded-xl shadow-sm" />
-                  <span className="truncate">Namma</span>
-                </NavLink>
-                <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
-                  <span
-                    className={[
-                      "inline-block h-2.5 w-2.5 rounded-full",
-                      backendConnected ? "bg-emerald-500" : "bg-red-500",
-                    ].join(" ")}
-                    aria-hidden
-                  />
-                  {backendConnected ? "Online" : "Offline"}
-                </div>
-              </div>
+    <div className="flex min-h-screen flex-col bg-[#F9F7F2] text-slate-900 font-inter">
+      {/* SECTION 1: Navabr */}
+      <style>{`
+        header nav a { color: var(--slate); transition: color 0.2s; }
+        header nav a:hover { color: var(--forest); }
+      `}</style>
+      <header className="sticky top-0 z-50 border-b border-slate-100 bg-[#FAF8F3]/85 backdrop-blur-md">
+        <div className="mx-auto max-w-[1280px] px-8 py-4">
+          <div className="flex items-center justify-between gap-8">
+            {/* Logo Left */}
+            <NavLink to="/" className="flex items-center gap-2.5 text-[22px] font-black text-[#1A3C2E] font-['Instrument_Serif']">
+              <div className="w-2 h-2 rounded-full bg-[#E8712A] animate-pulse"></div>
+              <span>Namma Connect</span>
+            </NavLink>
 
+            {/* Nav Links Center */}
+            <nav className="hidden lg:flex flex-1 items-center justify-center gap-10">
+              {isLandingPage ? (
+                <>
+                  <a href="#features" className="text-sm font-medium">Features</a>
+                  <a href="#how-it-works" className="text-sm font-medium">How it works</a>
+                  <a href="#impact" className="text-sm font-medium">Impact</a>
+                </>
+              ) : !isPublicPage && (
+                <div className="flex items-center gap-1">
+                  {navItems
+                    .filter(item => ["Coordinator", "Volunteer Dashboard", "Impact Analytics", "Heatmap"].includes(item.label))
+                    .map((item) => (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      className={({ isActive }) => 
+                        `rounded-lg px-4 py-2 text-sm font-bold transition-all duration-300 ${
+                          isActive ? "bg-[#EAF4EE] text-[#1A3C2E]" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                        }`
+                      }
+                    >
+                      {item.label}
+                    </NavLink>
+                  ))}
+                  {navItems
+                    .filter(item => !["Home", "Coordinator", "Volunteer Dashboard", "Impact Analytics", "Heatmap"].includes(item.label))
+                    .length > 0 && navItems.filter(item => ["Coordinator", "Volunteer Dashboard", "Impact Analytics", "Heatmap"].includes(item.label)).length > 0 && (
+                    <div className="h-4 w-[1px] bg-slate-200 mx-3"></div>
+                  )}
+                  {navItems
+                    .filter(item => !["Home", "Coordinator", "Volunteer Dashboard", "Impact Analytics", "Heatmap"].includes(item.label))
+                    .map((item) => (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      className={({ isActive }) => 
+                        `rounded-md px-3 py-1.5 text-xs font-bold transition-all duration-300 ${
+                          isActive ? "text-[#1A3C2E] underline underline-offset-4" : "text-slate-400 hover:text-slate-700"
+                        }`
+                      }
+                    >
+                      {item.label}
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+            </nav>
+
+            {/* CTA Right */}
+            <div className="flex items-center gap-6">
+              <div className="hidden lg:flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 bg-slate-50">
+                <span className={`h-1.5 w-1.5 rounded-full ${backendConnected ? "bg-[#10b981]" : "bg-red-500"} animate-pulse`} />
+                {backendConnected ? "Live" : "Down"}
+              </div>
+              
+              {!isLoginPage && (
+                <button
+                  onClick={() => navigate(isLandingPage ? "/login" : "/")}
+                  className="rounded-full bg-[#1A3C2E] px-6 py-2.5 text-sm font-bold text-white shadow-xl shadow-[#1A3C2E]/10 transition-all hover:bg-[#2D5E47] hover:-translate-y-0.5 active:scale-95"
+                >
+                  {isLandingPage ? "Enter Dashboard →" : "Sign Out"}
+                </button>
+              )}
+              
               <button
-                type="button"
-                aria-label="Toggle navigation menu"
-                className="inline-flex items-center rounded-md border border-slate-300 p-2 text-slate-700"
-                onClick={() => setMobileMenuOpen((open) => !open)}
+                className="lg:hidden text-slate-700"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
             </div>
           </div>
-
-          <div className="hidden md:grid md:grid-cols-[1fr_auto_1fr] md:items-center md:gap-4">
-            <div className="flex items-center gap-3 justify-self-start">
-              <NavLink to="/" className="inline-flex items-center gap-2 text-2xl font-bold tracking-tight text-[#1D9E75]">
-                <img src={brandLogo} alt="Namma Connect logo" className="h-9 w-9 rounded-xl shadow-sm" />
-                <span>Namma Connect</span>
-              </NavLink>
-              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
-                <span
-                  className={[
-                    "inline-block h-2.5 w-2.5 rounded-full",
-                    backendConnected ? "bg-emerald-500" : "bg-red-500",
-                  ].join(" ")}
-                  aria-hidden
-                />
-                {backendConnected ? "Backend online" : "Backend offline"}
-              </div>
-              <select
-                value={currentRole}
-                onChange={(e) => setRole(e.target.value as Role)}
-                className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 focus:border-[#1D9E75] focus:outline-none focus:ring-1 focus:ring-[#1D9E75]"
-              >
-                <option value="coordinator">Coordinator</option>
-                <option value="volunteer">Volunteer</option>
-                <option value="fieldworker">Field Worker</option>
-              </select>
-            </div>
-
-            <nav className="flex items-center justify-end gap-1 justify-self-end">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={({ isActive }) => pageLinkClass(isActive)}
-                >
-                  {item.label}
-                </NavLink>
-              ))}
-            </nav>
-          </div>
         </div>
 
         {mobileMenuOpen && (
-          <nav className="border-t border-slate-200 bg-white px-4 py-2 md:hidden">
-            <div className="flex flex-col gap-1">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={({ isActive }) => pageLinkClass(isActive)}
-                >
-                  {item.label}
-                </NavLink>
-              ))}
+          <nav className="border-t border-slate-100 bg-white p-6 lg:hidden">
+            <div className="flex flex-col gap-4">
+              {isLandingPage ? (
+                <>
+                  <a href="#features" className="text-sm font-medium">Features</a>
+                  <a href="#how-it-works" className="text-sm font-medium">How it works</a>
+                  <a href="#impact" className="text-sm font-medium">Impact</a>
+                </>
+              ) : !isLoginPage ? (
+                navItems.filter(item => item.to !== "/").map((item) => (
+                  <NavLink key={item.to} to={item.to} className="text-sm font-medium">{item.label}</NavLink>
+                ))
+              ) : null}
             </div>
           </nav>
         )}
       </header>
 
-      <main className="w-full flex-1 px-4 py-8 sm:px-6 lg:px-8">
-        <Outlet />
+      <main className="flex-1">
+        {isLandingPage ? (
+          <Outlet />
+        ) : (
+          <div className="mx-auto max-w-[1200px] px-6 py-10">
+            <Outlet />
+          </div>
+        )}
       </main>
 
-      <footer className="border-t border-emerald-100 bg-white">
-        <div className="w-full px-4 py-4 text-sm text-slate-600 sm:px-6 lg:px-8">
-          Built for India 🇮🇳
+      {/* SECTION 10: Footer */}
+      <footer className="border-t border-slate-100 bg-white p-8 px-12 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex items-center gap-2 text-lg font-black text-[#1A3C2E] font-['Instrument_Serif']">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#E8712A]"></div>
+          Namma Connect
+        </div>
+        <div className="text-xs font-medium text-slate-400 tracking-tight">
+          Built for India 🇮🇳 · Smart Resource Allocation · 2026
         </div>
       </footer>
     </div>
@@ -196,7 +228,7 @@ function ProtectedRoute({ children, path }: { children: React.ReactNode; path: s
         <button
           type="button"
           onClick={() => navigate(roleConfig[currentRole].homeRoute)}
-          className="mt-6 rounded-md bg-[#1D9E75] px-4 py-2 font-medium text-white hover:bg-[#167d5e]"
+          className="mt-6 rounded-2xl bg-[#114B3B] px-8 py-4 font-bold text-white hover:bg-[#0d3a2e] shadow-2xl shadow-[#114B3B]/10 transition-all"
         >
           Go to {roleConfig[currentRole].label} Dashboard
         </button>
@@ -230,8 +262,12 @@ function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/coordinator" element={<ProtectedRoute path="/coordinator"><CoordinatorDashboard /></ProtectedRoute>} />
         <Route path="/assignments" element={<ProtectedRoute path="/assignments"><CoordinatorAssignmentBoard /></ProtectedRoute>} />
+        <Route path="/ocr/review" element={<ProtectedRoute path="/ocr/review"><OCRReviewQueue /></ProtectedRoute>} />
+        <Route path="/analytics" element={<ProtectedRoute path="/analytics"><ImpactDashboard /></ProtectedRoute>} />
+        <Route path="/batch-matching" element={<ProtectedRoute path="/batch-matching"><BatchMatchingBoard /></ProtectedRoute>} />
         <Route path="/volunteer/register" element={<ProtectedRoute path="/volunteer/register"><VolunteerRegister /></ProtectedRoute>} />
         <Route path="/volunteer/dashboard" element={<ProtectedRoute path="/volunteer/dashboard"><VolunteerDashboard /></ProtectedRoute>} />
         <Route path="/heatmap" element={<ProtectedRoute path="/heatmap"><NeedHeatmap /></ProtectedRoute>} />

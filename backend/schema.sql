@@ -72,6 +72,19 @@ create table if not exists assignment_history (
 	changed_at timestamptz not null default timezone('utc', now())
 );
 
+-- Volunteer scheduling with time slots and recurring shifts
+create table if not exists scheduling_slots (
+	id uuid primary key default gen_random_uuid(),
+	volunteer_id uuid not null references volunteers(id) on delete cascade,
+	day_of_week integer not null check (day_of_week >= 0 and day_of_week <= 6),
+	start_time time not null,
+	end_time time not null,
+	is_recurring boolean not null default true,
+	is_available boolean not null default true,
+	created_at timestamptz not null default timezone('utc', now()),
+	updated_at timestamptz not null default timezone('utc', now())
+);
+
 create table if not exists survey_uploads (
 	id uuid primary key default gen_random_uuid(),
 	image_url text not null,
@@ -79,8 +92,27 @@ create table if not exists survey_uploads (
 	confidence_score double precision not null default 0,
 	needs_review boolean not null default true,
 	extracted_task_id uuid references tasks(id) on delete set null,
+	review_status text not null default 'pending' check (review_status in ('pending', 'approved', 'rejected', 'needs_correction')),
+	reviewed_by uuid references volunteers(id) on delete set null,
+	reviewed_at timestamptz,
+	corrections text,
 	created_at timestamptz not null default timezone('utc', now()),
 	updated_at timestamptz not null default timezone('utc', now())
+);
+
+-- Location geocoding confidence tracking for ward-to-coordinate mapping
+create table if not exists location_geocoding (
+	id uuid primary key default gen_random_uuid(),
+	ward text not null,
+	district text not null,
+	latitude double precision not null,
+	longitude double precision not null,
+	confidence_score double precision not null default 0,
+	data_source text not null default 'manual',
+	verified_at timestamptz,
+	created_at timestamptz not null default timezone('utc', now()),
+	updated_at timestamptz not null default timezone('utc', now()),
+	unique(ward, district)
 );
 
 create table if not exists activity_log (
@@ -92,69 +124,75 @@ create table if not exists activity_log (
 	created_at timestamptz not null default timezone('utc', now())
 );
 
--- Volunteer scheduling: time-slot availability
-create table if not exists volunteer_time_slots (
+-- Phase C: Impact Analytics and Reporting
+create table if not exists volunteer_impact_metrics (
 	id uuid primary key default gen_random_uuid(),
 	volunteer_id uuid not null references volunteers(id) on delete cascade,
-	day_of_week integer not null check (day_of_week >= 0 and day_of_week <= 6),
-	start_time time not null,
-	end_time time not null,
-	is_available boolean not null default true,
+	total_hours_worked integer not null default 0,
+	households_served integer not null default 0,
+	tasks_completed integer not null default 0,
+	avg_completion_time_hours double precision,
+	impact_score double precision not null default 0,
+	last_calculated_at timestamptz not null default timezone('utc', now()),
 	created_at timestamptz not null default timezone('utc', now()),
 	updated_at timestamptz not null default timezone('utc', now())
 );
 
--- Recurring shifts for volunteers
-create table if not exists volunteer_shifts (
+-- District-level impact tracking
+create table if not exists district_impact_metrics (
 	id uuid primary key default gen_random_uuid(),
+	district text not null unique,
+	total_households_served integer not null default 0,
+	total_tasks_completed integer not null default 0,
+	active_volunteers integer not null default 0,
+	total_volunteer_hours integer not null default 0,
+	avg_task_completion_rate double precision not null default 0,
+	last_calculated_at timestamptz not null default timezone('utc', now()),
+	created_at timestamptz not null default timezone('utc', now()),
+	updated_at timestamptz not null default timezone('utc', now())
+);
+
+-- Task templates for recurring crises
+create table if not exists task_templates (
+	id uuid primary key default gen_random_uuid(),
+	name text not null,
+	need_type text not null check (need_type in ('nutrition', 'medical', 'shelter', 'education', 'water', 'livelihood', 'other')),
+	description text,
+	base_urgency_score integer not null default 50 check (base_urgency_score >= 0 and base_urgency_score <= 100),
+	required_skills text[] not null default '{}',
+	estimated_hours integer not null default 2,
+	is_active boolean not null default true,
+	created_by uuid references volunteers(id) on delete set null,
+	created_at timestamptz not null default timezone('utc', now()),
+	updated_at timestamptz not null default timezone('utc', now())
+);
+
+-- Match suggestions for batch assignment
+create table if not exists batch_match_suggestions (
+	id uuid primary key default gen_random_uuid(),
+	task_id uuid not null references tasks(id) on delete cascade,
 	volunteer_id uuid not null references volunteers(id) on delete cascade,
-	shift_name text not null,
-	start_date date not null,
-	end_date date,
-	monday boolean not null default false,
-	tuesday boolean not null default false,
-	wednesday boolean not null default false,
-	thursday boolean not null default false,
-	friday boolean not null default false,
-	saturday boolean not null default false,
-	sunday boolean not null default false,
-	start_time time not null,
-	end_time time not null,
-	max_tasks_per_shift integer default 5,
-	created_at timestamptz not null default timezone('utc', now()),
-	updated_at timestamptz not null default timezone('utc', now())
+	match_score double precision not null,
+	skill_score double precision,
+	distance_score double precision,
+	availability_score double precision,
+	suggested_at timestamptz not null default timezone('utc', now()),
+	accepted_at timestamptz,
+	rejected_at timestamptz,
+	created_at timestamptz not null default timezone('utc', now())
 );
 
--- OCR Review Queue for coordinator review
-create table if not exists ocr_review_queue (
+-- Batch assignment tracking
+create table if not exists batch_assignments (
 	id uuid primary key default gen_random_uuid(),
-	survey_upload_id uuid not null references survey_uploads(id) on delete cascade,
-	status text not null default 'pending' check (status in ('pending', 'approved', 'rejected', 'corrected')),
-	confidence_threshold double precision not null default 0.7,
-	needs_manual_review boolean not null default false,
-	reviewer_id text,
-	reviewed_at timestamptz,
-	corrections_made text,
-	corrected_fields text[] default '{}',
-	original_data text,
-	corrected_data text,
-	reason_for_correction text,
+	created_by uuid references volunteers(id) on delete set null,
+	task_count integer not null default 0,
+	volunteer_count integer not null default 0,
+	matched_count integer not null default 0,
+	completed_at timestamptz,
+	notes text,
 	created_at timestamptz not null default timezone('utc', now()),
 	updated_at timestamptz not null default timezone('utc', now())
-);
-
--- Geocoding cache for ward-to-coordinate mapping
-create table if not exists geocoding_cache (
-	id uuid primary key default gen_random_uuid(),
-	ward text not null,
-	district text not null,
-	lat double precision not null,
-	lng double precision not null,
-	confidence double precision not null default 0.8,
-	source text default 'manual',
-	verified boolean not null default false,
-	created_at timestamptz not null default timezone('utc', now()),
-	unique(ward, district)
 );
 
 create index if not exists idx_volunteers_availability on volunteers(availability);
@@ -171,8 +209,26 @@ create index if not exists idx_assignments_sla_breached on assignments(sla_breac
 create index if not exists idx_assignments_escalated_to on assignments(escalated_to);
 create index if not exists idx_assignment_history_assignment_id on assignment_history(assignment_id);
 create index if not exists idx_assignment_history_changed_at on assignment_history(changed_at desc);
+create index if not exists idx_scheduling_slots_volunteer_id on scheduling_slots(volunteer_id);
+create index if not exists idx_scheduling_slots_day_of_week on scheduling_slots(day_of_week);
+create index if not exists idx_scheduling_slots_is_available on scheduling_slots(is_available);
+create index if not exists idx_survey_uploads_review_status on survey_uploads(review_status);
+create index if not exists idx_survey_uploads_confidence_score on survey_uploads(confidence_score desc);
+create index if not exists idx_survey_uploads_needs_review on survey_uploads(needs_review);
+create index if not exists idx_location_geocoding_ward_district on location_geocoding(ward, district);
+create index if not exists idx_location_geocoding_confidence on location_geocoding(confidence_score desc);
 create index if not exists idx_activity_log_task_id on activity_log(task_id);
 create index if not exists idx_activity_log_created_at on activity_log(created_at desc);
+create index if not exists idx_volunteer_impact_metrics_volunteer_id on volunteer_impact_metrics(volunteer_id);
+create index if not exists idx_volunteer_impact_metrics_impact_score on volunteer_impact_metrics(impact_score desc);
+create index if not exists idx_district_impact_metrics_district on district_impact_metrics(district);
+create index if not exists idx_task_templates_need_type on task_templates(need_type);
+create index if not exists idx_task_templates_is_active on task_templates(is_active);
+create index if not exists idx_batch_match_suggestions_task_id on batch_match_suggestions(task_id);
+create index if not exists idx_batch_match_suggestions_volunteer_id on batch_match_suggestions(volunteer_id);
+create index if not exists idx_batch_match_suggestions_match_score on batch_match_suggestions(match_score desc);
+create index if not exists idx_batch_assignments_created_by on batch_assignments(created_by);
+create index if not exists idx_batch_assignments_created_at on batch_assignments(created_at desc);
 
 create unique index if not exists idx_assignments_active_task_unique
 	on assignments(task_id)
@@ -206,6 +262,18 @@ before update on survey_uploads
 for each row
 execute function set_updated_at_timestamp();
 
+drop trigger if exists trg_scheduling_slots_updated_at on scheduling_slots;
+create trigger trg_scheduling_slots_updated_at
+before update on scheduling_slots
+for each row
+execute function set_updated_at_timestamp();
+
+drop trigger if exists trg_location_geocoding_updated_at on location_geocoding;
+create trigger trg_location_geocoding_updated_at
+before update on location_geocoding
+for each row
+execute function set_updated_at_timestamp();
+
 drop trigger if exists trg_assignments_updated_at on assignments;
 create trigger trg_assignments_updated_at
 before update on assignments
@@ -231,14 +299,7 @@ before update on assignments
 for each row
 execute function check_sla_breach();
 
--- Also check SLA on insert so newly created assignments with past deadlines are marked
-drop trigger if exists trg_assignments_sla_breach_insert on assignments;
-create trigger trg_assignments_sla_breach_insert
-before insert on assignments
-for each row
-execute function check_sla_breach();
-
--- Trigger to automatically log status transitions (updates)
+-- Trigger to automatically log status transitions
 create or replace function log_assignment_status_change()
 returns trigger
 language plpgsql
@@ -258,20 +319,27 @@ after update on assignments
 for each row
 execute function log_assignment_status_change();
 
--- Trigger to add initial history row when assignment is created
-create or replace function log_assignment_status_insert()
-returns trigger
-language plpgsql
-as $$
-begin
-	insert into assignment_history(assignment_id, old_status, new_status, changed_by, changed_at)
-	values(new.id, NULL, new.status, coalesce(new.assigned_by, 'system'), timezone('utc', now()));
-	return new;
-end;
-$$;
-
-drop trigger if exists trg_assignment_status_history_insert on assignments;
-create trigger trg_assignment_status_history_insert
-after insert on assignments
+-- Phase C: Updated_at triggers for new tables
+drop trigger if exists trg_volunteer_impact_metrics_updated_at on volunteer_impact_metrics;
+create trigger trg_volunteer_impact_metrics_updated_at
+before update on volunteer_impact_metrics
 for each row
-execute function log_assignment_status_insert();
+execute function set_updated_at_timestamp();
+
+drop trigger if exists trg_district_impact_metrics_updated_at on district_impact_metrics;
+create trigger trg_district_impact_metrics_updated_at
+before update on district_impact_metrics
+for each row
+execute function set_updated_at_timestamp();
+
+drop trigger if exists trg_task_templates_updated_at on task_templates;
+create trigger trg_task_templates_updated_at
+before update on task_templates
+for each row
+execute function set_updated_at_timestamp();
+
+drop trigger if exists trg_batch_assignments_updated_at on batch_assignments;
+create trigger trg_batch_assignments_updated_at
+before update on batch_assignments
+for each row
+execute function set_updated_at_timestamp();

@@ -186,7 +186,7 @@ function CameraIcon() {
 
 function CheckmarkAnimation() {
   return (
-    <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shadow-sm animate-pulse">
+    <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#EAF4EE] text-[#1A3C2E] shadow-sm animate-pulse">
       <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none" stroke="currentColor" strokeWidth="2.5">
         <path strokeLinecap="round" strokeLinejoin="round" d="M5 12.5l4.2 4.2L19 7" />
       </svg>
@@ -196,37 +196,37 @@ function CheckmarkAnimation() {
 
 function StepIndicator({ step }: { step: Step }) {
   const steps = [
-    { id: 1, title: "Step 1", subtitle: "Upload" },
-    { id: 2, title: "Step 2", subtitle: "Review" },
-    { id: 3, title: "Step 3", subtitle: "Success" },
+    { id: 1, title: "Step 1", subtitle: "Upload Survey" },
+    { id: 2, title: "Step 2", subtitle: "Review Extraction" },
+    { id: 3, title: "Step 3", subtitle: "Task Ready" },
   ] as const;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex items-center justify-between gap-2">
+    <div className="rounded-[1.5rem] bg-white p-6 shadow-[0_20px_50px_rgba(26,60,46,0.04)] border border-[#114B3B]/5">
+      <div className="flex items-center justify-between gap-4">
         {steps.map((item, index) => {
           const isComplete = step > item.id;
           const isCurrent = step === item.id;
 
           return (
-            <div key={item.id} className="flex flex-1 items-center gap-2">
-              <div className="flex items-center gap-2">
+            <div key={item.id} className="flex flex-1 items-center gap-3">
+              <div className="flex items-center gap-3">
                 <span
                   className={[
-                    "inline-flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold",
+                    "inline-flex h-10 w-10 items-center justify-center rounded-xl text-sm font-black transition-all",
                     isComplete || isCurrent
-                      ? "bg-[#1D9E75] text-white"
-                      : "bg-slate-200 text-slate-600",
+                      ? "bg-[#1A3C2E] text-white shadow-lg shadow-[#1A3C2E]/20 ring-4 ring-[#1A3C2E]/5"
+                      : "bg-slate-50 text-slate-300",
                   ].join(" ")}
                 >
                   {item.id}
                 </span>
-                <div>
-                  <p className="text-xs font-semibold text-slate-700">{item.title}</p>
-                  <p className="text-xs text-slate-500">{item.subtitle}</p>
+                <div className="hidden sm:block">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{item.title}</p>
+                  <p className={`text-xs font-bold ${isCurrent ? 'text-[#1A3C2E]' : 'text-slate-500'}`}>{item.subtitle}</p>
                 </div>
               </div>
-              {index < steps.length - 1 ? <span className="hidden flex-1 border-t border-slate-300 sm:block" /> : null}
+              {index < steps.length - 1 ? <span className="flex-1 border-t-2 border-dashed border-slate-100" /> : null}
             </div>
           );
         })}
@@ -318,10 +318,10 @@ export default function SurveyUpload() {
 
   const fieldClassName = useMemo(() => {
     return [
-      "w-full rounded-md border bg-white px-3 py-2 text-sm outline-none transition",
+      "w-full rounded-xl border bg-slate-50/50 px-4 py-3 text-sm outline-none transition font-medium",
       lowConfidence
-        ? "border-amber-400 focus:border-amber-500"
-        : "border-slate-300 focus:border-[#1D9E75]",
+        ? "border-amber-300 focus:border-amber-500"
+        : "border-slate-100 focus:border-[#1A3C2E]",
     ].join(" ");
   }, [lowConfidence]);
 
@@ -458,11 +458,15 @@ export default function SurveyUpload() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-8">
       <header>
-        <h1 className="text-3xl font-bold text-slate-900">Survey Upload</h1>
-        <p className="mt-2 text-slate-600">
-          Digitize handwritten community surveys and convert them into actionable tasks.
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EAF4EE] text-[#1A3C2E] text-[10px] font-black uppercase tracking-widest mb-4">
+          <div className="w-1.5 h-1.5 rounded-full bg-[#E8712A] animate-pulse"></div>
+          Vision AI Engine
+        </div>
+        <h1 className="text-4xl font-black text-[#1A3C2E] font-['Instrument_Serif'] tracking-tight">Survey Digitize</h1>
+        <p className="mt-2 text-slate-500 font-medium max-w-2xl">
+          Upload handwritten community surveys. Our Vision AI will extract needs, urgency, and household counts automatically.
         </p>
       </header>
 
@@ -492,26 +496,28 @@ export default function SurveyUpload() {
               event.preventDefault();
               handleFileSelect(event.dataTransfer.files?.[0] || null);
             }}
-            className="rounded-xl border-2 border-dashed border-emerald-200 bg-emerald-50/50 p-8 text-center"
+            className="rounded-[2rem] border-2 border-dashed border-[#114B3B]/10 bg-slate-50/50 p-12 text-center transition-all hover:bg-slate-50 hover:border-[#E8712A]/30"
           >
-            <p className="text-sm font-medium text-slate-700">Drop survey image here or click to browse</p>
-            <p className="mt-1 text-xs text-slate-500">Take a clear photo of the filled survey for best OCR accuracy</p>
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-white shadow-xl shadow-[#1A3C2E]/5 flex items-center justify-center text-[#1A3C2E] mb-6">
+              <CameraIcon />
+            </div>
+            <p className="text-base font-bold text-[#1A3C2E]">Drop survey image here</p>
+            <p className="mt-2 text-xs text-slate-400 font-medium uppercase tracking-widest">Take a clear photo for best AI accuracy</p>
 
-            <div className="mt-4 flex flex-wrap justify-center gap-3">
+            <div className="mt-8 flex flex-wrap justify-center gap-4">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50"
+                className="rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-600 transition-all hover:bg-slate-50 hover:-translate-y-1"
               >
-                Choose Image
+                Choose from Files
               </button>
               <button
                 type="button"
                 onClick={() => cameraInputRef.current?.click()}
-                className="inline-flex items-center gap-2 rounded-md bg-[#1D9E75] px-4 py-2 text-sm font-semibold text-white transition-all duration-300 hover:bg-[#177f5e]"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#1A3C2E] px-6 py-3 text-sm font-bold text-white shadow-xl shadow-[#1A3C2E]/10 transition-all hover:bg-[#2D5E47] hover:-translate-y-1"
               >
-                <CameraIcon />
-                Take Photo
+                Capture Scan
               </button>
             </div>
           </div>
@@ -523,22 +529,22 @@ export default function SurveyUpload() {
             </div>
           )}
 
-          <div className="mt-5">
+          <div className="mt-8">
             <button
               type="button"
               onClick={startProcessing}
               disabled={!selectedFile || processMutation.isPending}
-              className="inline-flex items-center gap-2 rounded-md bg-[#1D9E75] px-5 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:bg-[#177f5e] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex w-full sm:w-auto items-center justify-center gap-3 rounded-2xl bg-[#1A3C2E] px-10 py-4 text-base font-bold text-white shadow-2xl shadow-[#1A3C2E]/20 transition-all hover:bg-[#2D5E47] hover:-translate-y-1 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {processMutation.isPending ? (
                 <>
-                  <svg viewBox="0 0 24 24" className="h-4 w-4 animate-spin" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg viewBox="0 0 24 24" className="h-5 w-5 animate-spin" fill="none" stroke="currentColor" strokeWidth="3">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 3a9 9 0 1 0 9 9" />
                   </svg>
-                  Reading survey... This takes a few seconds
+                  Initializing AI Analysis...
                 </>
               ) : (
-                "Process Survey"
+                "Process Survey Scan →"
               )}
             </button>
           </div>

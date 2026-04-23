@@ -1,182 +1,115 @@
-# Namma Connect
+# <p align="center"><img src="frontend/public/brand-logo.svg" width="60" height="60" alt="Namma Connect Logo" /><br/>Namma Connect</p>
 
-Namma Connect is an AI-assisted volunteer coordination platform for NGOs. It helps teams collect field needs, prioritize urgency, match volunteers, and monitor operations in real time.
+<p align="center">
+  <b>Empowering NGOs across Bharat with AI-assisted volunteer coordination and real-time community insights.</b>
+</p>
 
-## Why Namma Connect
+<p align="center">
+  <img src="https://img.shields.io/badge/Status-Live-0D9488?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Stack-React_|_FastAPI_|_Gemini-114B3B?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/AI-Vision_|_Matching_|_LLM-emerald?style=for-the-badge" />
+</p>
 
-- Faster intake of field requests through OCR-assisted survey uploads.
-- Better prioritization using AI classification and urgency scoring.
-- Smarter volunteer assignment based on skills and proximity.
-- Clear live visibility for coordinators through dashboard stats, heatmaps, and activity feeds.
-- Integrated SMS notifications for assignment and completion updates.
+---
 
-## Tech Stack
+## 🌿 The Vision
+In the heart of community service, logistics often becomes the bottleneck for impact. **Namma Connect** is the digital infrastructure built to move resources faster. By combining **Computer Vision**, **Large Language Models (Gemini)**, and **Geospatial Intelligence**, we transform analog field reports into organized, high-priority volunteer deployments in seconds.
 
-- Backend: FastAPI, Supabase (Postgres + Storage), Twilio, Google Gemini, OpenCV, Tesseract OCR
-- Frontend: React, TypeScript, Vite, Tailwind CSS, TanStack Query, React Router, React Leaflet
-- Deployment: Render (backend), Vercel (frontend)
+---
 
-## Project Structure
+## ✨ Key Capabilities
+
+| Feature | Description | Tech |
+| :--- | :--- | :--- |
+| **📷 Vision AI Entry** | Transform handwritten field surveys into digital tasks instantly. | Tesseract + OpenCV |
+| **🧠 Smart Prioritization** | LLM-driven urgency scoring ensures the most critical needs are met first. | Google Gemini 1.5 Pro |
+| **🧭 Precision Matching** | Skills-based algorithm identifies the top 10 local volunteers by proximity. | Custom Scoring Hub |
+| **🗺️ Impact Heatmaps** | Live geospatial visualization of community needs for coordinators. | React Leaflet |
+| **📱 SMS Dispatch** | Automated volunteer notifications for rapid field deployment. | Twilio Integration |
+
+---
+
+## 🛠️ Technological Core
+
+### **Frontend**
+- **Architecture:** React 18 + TypeScript (Vite)
+- **State Management:** TanStack Query (React Query)
+- **UI System:** Custom 'Grounded Trust' Design (Tailwind CSS)
+- **Maps:** Leaflet.js with dynamic cluster markers
+
+### **Backend**
+- **Engine:** FastAPI (High-performance Python)
+- **Database:** Supabase (PostgreSQL + Row Level Security)
+- **AI/ML:** 
+  - **Gemini AI:** Task classification & priority scoring
+  - **Vision Engine:** OCR pipeline for field log digitization
+- **Communcations:** Twilio SMS API
+
+---
+
+## 🏗️ Project Architecture
 
 ```text
 smart-resource-allocation/
-|- backend/
-|  |- app/
-|  |  |- routers/        # API routes (tasks, volunteers, OCR, dashboard)
-|  |  |- services/       # matching, OCR, notifications, NLP classification
-|  |  |- db/             # Supabase client and DB helpers
-|  |- requirements.txt
-|  |- .env.example
-|- frontend/
-|  |- src/
-|  |  |- pages/          # coordinator, volunteer, heatmap, survey flows
-|  |  |- components/     # reusable UI components
-|  |  |- api/            # typed HTTP clients
-|  |- .env.example
-|- render.yaml
-|- README.md
+├── 📂 backend/
+│   ├── 📂 app/
+│   │   ├── 📂 routers/    # Domain-specific API endpoints
+│   │   ├── 📂 services/   # AI Matching, Gemini NLP, OCR Hub
+│   │   └── 📂 db/         # Supabase client & abstractions
+│   └── 📄 requirements.txt
+├── 📂 frontend/
+│   ├── 📂 src/
+│   │   ├── 📂 pages/      # Dashboard, Map, Coordinator Hub
+│   │   ├── 📂 components/ # Glassmorphic UI components
+│   │   └── 📂 api/        # Axios clients & Signal handlers
+│   └── 📄 package.json
+└── 📄 README.md
 ```
 
-## Core Features
+---
 
-- Volunteer registration with skills, location, and availability.
-- Task lifecycle management: create, match, assign, complete.
-- Assignment suggestions from the matching service.
-- OCR upload and confirm flow that creates tasks from survey images.
-- Dashboard endpoints for stats, activity feed, and need heatmap.
-- Backend health indicator and resilient frontend error handling.
+## 🚀 Quick Start
 
-## Quick Start (Local Development)
-
-### 1. Prerequisites
-
+### 1. Requirements
 - Python 3.10+
 - Node.js 20+
-- npm 10+
-- Supabase project with required tables
+- Supabase Project (Tables schema provided in migration scripts)
 
-### 2. Clone
-
+### 2. Physical Setup
 ```bash
 git clone https://github.com/Ganesh-0509/smart-resource-allocation.git
 cd smart-resource-allocation
 ```
 
-### 3. Backend Setup
-
-```bash
-cd backend
-python -m venv ../venv
-```
-
-Activate virtual environment:
-
-- Windows PowerShell:
-
-```powershell
-..\venv\Scripts\Activate.ps1
-```
-
-- macOS/Linux:
-
-```bash
-source ../venv/bin/activate
-```
-
-Install backend dependencies:
-
+### 3. Backend Deployment
 ```bash
 pip install -r requirements.txt
+# Copy environment variables from .env.example
+uvicorn app.main:app --reload
 ```
 
-Create environment file:
-
-- Copy [backend/.env.example](backend/.env.example) to backend/.env
-- Fill all required values
-
-Run backend:
-
-```bash
-uvicorn app.main:app --reload --port 8000
-```
-
-Backend health: http://127.0.0.1:8000/
-Swagger docs: http://127.0.0.1:8000/docs
-
-### 4. Frontend Setup
-
-Open a new terminal:
-
+### 4. Frontend Launch
 ```bash
 cd frontend
 npm install
-```
-
-Create environment file:
-
-- Copy [frontend/.env.example](frontend/.env.example) to frontend/.env
-- Set VITE_API_URL, for local backend use:
-
-```bash
-VITE_API_URL=http://127.0.0.1:8000
-```
-
-Run frontend:
-
-```bash
 npm run dev
 ```
 
-App URL: http://localhost:5173
+---
 
-## Environment Variables
+## 🎨 Design Philosophy: "Grounded Trust"
+Namma Connect uses a custom design system built for institutional credibility.
+- **Bone (#F9F7F2)**: To reduce eye strain and feel more human-centric.
+- **Forest (#114B3B)**: For deep trustworthiness and authority.
+- **Teal (#0D9488)**: Luminous action points to guide the user naturally.
 
-| Variable | Scope | Purpose |
-|---|---|---|
-| SUPABASE_URL | backend | Supabase project URL |
-| SUPABASE_KEY | backend | Supabase anon/service key used by API |
-| GEMINI_API_KEY | backend | Gemini API key for NLP classification |
-| TWILIO_SID | backend | Twilio account SID |
-| TWILIO_TOKEN | backend | Twilio auth token |
-| TWILIO_FROM | backend | Twilio sender number in E.164 format |
-| VITE_API_URL | frontend | Base URL for backend API |
+---
 
-## API Overview
+## 📜 License
+Distributed under the MIT License. See `LICENSE` for more information.
 
-Common routes:
+---
 
-- GET / -> API health
-- POST /api/volunteers/register -> register volunteer
-- GET /api/tasks/ -> list tasks
-- GET /api/tasks/{task_id}/matches -> get match candidates
-- POST /api/tasks/{id}/assign -> assign volunteer
-- PATCH /api/tasks/{id}/complete -> complete task
-- GET /api/dashboard/stats -> dashboard summary metrics
-- GET /api/dashboard/heatmap -> map-ready task points
-- GET /api/dashboard/activity -> recent activity feed
-- POST /api/ocr/upload -> upload survey image
-- POST /api/ocr/confirm/{upload_id} -> confirm OCR output and create task
-
-## Deployment Notes
-
-- Backend deployment can be configured using [render.yaml](render.yaml).
-- Frontend is Vite-based and can be deployed to Vercel.
-- Ensure production CORS and VITE_API_URL point to deployed backend.
-
-## Troubleshooting
-
-- Frontend looks unstyled or misaligned:
-	- Confirm [frontend/src/index.css](frontend/src/index.css) includes Tailwind import.
-	- Restart dev server after dependency or CSS pipeline changes.
-- Backend fails at startup:
-	- Verify backend/.env values, especially Supabase and API keys.
-	- Run from [backend](backend) so imports resolve correctly.
-- Dashboard data is empty:
-	- Check Supabase table data and row-level permissions.
-	- Verify frontend VITE_API_URL points to the running backend.
-
-## Current Status
-
-- Rebrand completed to Namma Connect across backend, frontend, and docs.
-- Dashboard activity feed and heatmap endpoints are integrated and working.
-- Frontend includes health status, query error handling, and retry UX.
+<p align="center">
+  Built for <b>Bharat</b> 🇮🇳 with ❤️ by the Namma Connect Team.
+</p>

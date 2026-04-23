@@ -13,18 +13,18 @@ function getActionStyles(action: string): string {
   const normalized = action.toLowerCase();
 
   if (normalized.includes("assigned")) {
-    return "border-l-[#1D9E75] bg-emerald-50";
+    return "border-l-[#1A3C2E] bg-[#EAF4EE]";
   }
 
   if (normalized.includes("completed")) {
-    return "border-l-blue-500 bg-blue-50";
+    return "border-l-[#E8712A] bg-[#FEF0E6]";
   }
 
   if (normalized.includes("submitted")) {
-    return "border-l-amber-500 bg-amber-50";
+    return "border-l-[#E8712A] bg-[#FEF0E6]";
   }
 
-  return "border-l-slate-300 bg-slate-50";
+  return "border-l-slate-300 bg-slate-50/50";
 }
 
 function formatTimestamp(time: string): string {
@@ -46,21 +46,21 @@ export default function ActivityFeed({ activities }: ActivityFeedProps) {
   }
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h3 className="text-base font-semibold text-slate-900">Recent Activity</h3>
-      <div className="mt-3 max-h-80 space-y-2 overflow-y-auto pr-1">
+    <section className="rounded-2xl bg-white p-4 shadow-sm border border-[#114B3B]/5">
+      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Field Activity Stream</h3>
+      <div className="max-h-64 space-y-3 overflow-y-auto pr-1 custom-scrollbar">
         {activities.map((item, index) => (
           <article
             key={`${item.time}-${item.actor}-${index}`}
-            className={`rounded-md border-l-4 p-3 ${getActionStyles(item.action)}`}
+            className={`rounded-xl border-l-[6px] p-4 transition-all hover:translate-x-1 ${getActionStyles(item.action)}`}
           >
-            <div className="flex items-start justify-between gap-2">
-              <p className="text-sm text-slate-800">
-                <span className="font-semibold">{item.actor}</span>{" "}
-                <span className="font-medium text-slate-700">{item.action}</span>{" "}
-                <span className="text-slate-900">{item.task_title}</span>
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm text-slate-800 leading-relaxed">
+                <span className="font-bold text-[#1A3C2E]">{item.actor}</span>{" "}
+                <span className="font-bold text-slate-400 lowercase tracking-tight">{item.action}</span>{" "}
+                <span className="font-bold text-[#1A3C2E]">{item.task_title}</span>
               </p>
-              <time className="shrink-0 text-xs text-slate-500">{formatTimestamp(item.time)}</time>
+              <time className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-slate-400">{formatTimestamp(item.time)}</time>
             </div>
           </article>
         ))}

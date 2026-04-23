@@ -3,7 +3,12 @@ import logging
 import os
 
 from dotenv import load_dotenv
-from twilio.rest import Client
+
+try:
+    from twilio.rest import Client
+    HAS_TWILIO = True
+except ImportError:
+    HAS_TWILIO = False
 
 load_dotenv()
 
@@ -11,6 +16,8 @@ logger = logging.getLogger(__name__)
 
 
 def _twilio_configured() -> bool:
+    if not HAS_TWILIO:
+        return False
     return all(
         [
             os.getenv("TWILIO_SID"),

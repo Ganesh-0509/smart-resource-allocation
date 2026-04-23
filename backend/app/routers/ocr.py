@@ -239,3 +239,180 @@ async def confirm_survey_upload(upload_id: UUID, confirmed_task: TaskCreate):
     except Exception as exc:
         logger.exception("Survey confirmation failed: %s", exc)
         raise HTTPException(status_code=500, detail=f"Survey confirmation failed: {exc}")
+
+
+# ============================================================================
+# OCR Review Queue Endpoints (Phase B)
+# ============================================================================
+
+
+class OCRReviewRequest(BaseModel):
+    review_status: str  # 'approved', 'rejected', 'needs_correction'
+    corrections: str | None = None
+
+
+class OCRReviewQueueItem(BaseModel):
+    id: UUID
+    image_url: str
+    raw_ocr_text: str
+    confidence_score: float
+    extracted_task_id: str | None
+    needs_review: bool
+    review_status: str
+    created_at: str
+
+
+@router.get("/review/queue", response_model=dict)
+async def get_ocr_review_queue(min_confidence: float = 0.0, status: str = "pending"):
+    """Get OCR review queue filtered by confidence and status."""
+    try:
+        query = supabase.table("survey_uploads").select("*")
+
+        if status == "pending":
+            query = query.eq("review_status", "pending")
+        elif status == "needs_correction":
+            query = query.eq("review_status", "needs_correction")
+
+        response = (
+            query.gte("confidence_score", min_confidence)
+            .order("confidence_score", desc=False)
+            .order("created_at", desc=True)
+            .execute()
+        )
+
+        items = [
+            OCRReviewQueueItem(
+                id=item["id"],
+                image_url=item["image_url"],
+                raw_ocr_text=item["raw_ocr_text"] or "",
+                confidence_score=item["confidence_score"],
+                extracted_task_id=item.get("extracted_task_id"),
+                needs_review=item["needs_review"],
+                review_status=item["review_status"],
+                created_at=item["created_at"],
+            )
+            for item in (response.data or [])
+        ]
+
+        return {
+            "total": len(items),
+            "items": items,
+            "min_confidence_threshold": min_confidence,
+        }
+    except Exception as exc:
+        # Check if it's a "column does not exist" error (42703) or "table does not exist" (PGRST205)
+        error_msg = str(exc)
+        if "42703" in error_msg or "PGRST205" in error_msg:
+            logger.warning("OCR table or column missing, returning empty queue: %s", exc)
+            return {
+                "total": 0,
+                "items": [],
+                "min_confidence_threshold": min_confidence,
+                "warning": "Database schema out of sync"
+            }
+        logger.exception("Failed to get OCR review queue: %s", exc)
+        raise HTTPException(status_code=500, detail=f"Failed to get OCR review queue: {exc}")
+
+
+@router.post("/review/{upload_id}")
+async def review_ocr_upload(upload_id: UUID, review: OCRReviewRequest, reviewer_id: UUID | None = None):
+    """Review an OCR upload (approve, reject, or mark as needing correction)."""
+    try:
+        valid_statuses = ["approved", "rejected", "needs_correction"]
+        if review.review_status not in valid_statuses:
+            raise HTTPException(
+                status_code=400,
+                detail=f"review_status must be one of: {', '.join(valid_statuses)}",
+            )
+
+        upload_lookup = (
+            supabase.table("survey_uploads")
+            .select("id, extracted_task_id")
+            .eq("id", str(upload_id))
+            .limit(1)
+            .execute()
+        )
+
+        if not upload_lookup.data:
+            raise HTTPException(status_code=404, detail="Survey upload not found.")
+
+        update_payload = {
+            "review_status": review.review_status,
+            "needs_review": review.review_status == "needs_correction",
+            "reviewed_at": "now()",
+        }
+
+        if reviewer_id:
+            update_payload["reviewed_by"] = str(reviewer_id)
+
+        if review.corrections:
+            update_payload["corrections"] = review.corrections
+
+        response = (
+            supabase.table("survey_uploads")
+            .update(update_payload)
+            .eq("id", str(upload_id))
+            .execute()
+        )
+
+        if not response.data:
+            raise HTTPException(status_code=500, detail="Failed to update review status.")
+
+        return {
+            "status": "reviewed",
+            "upload_id": str(upload_id),
+            "review_status": review.review_status,
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Failed to review OCR upload: %s", exc)
+        raise HTTPException(status_code=500, detail=f"Failed to review OCR upload: {exc}")
+
+
+@router.get("/review/stats")
+async def get_ocr_review_stats():
+    """Get OCR review statistics."""
+    try:
+        response = supabase.table("survey_uploads").select("*").execute()
+
+        data = response.data or []
+        total = len(data)
+        approved = len([item for item in data if item["review_status"] == "approved"])
+        rejected = len([item for item in data if item["review_status"] == "rejected"])
+        pending = len([item for item in data if item["review_status"] == "pending"])
+        needs_correction = len([item for item in data if item["review_status"] == "needs_correction"])
+
+        # Calculate average confidence
+        avg_confidence = (
+            sum(item["confidence_score"] for item in data) / total if total > 0 else 0
+        )
+
+        # Count low-confidence items
+        low_confidence = len([item for item in data if item["confidence_score"] < 0.7])
+
+        return {
+            "total": total,
+            "approved": approved,
+            "rejected": rejected,
+            "pending": pending,
+            "needs_correction": needs_correction,
+            "average_confidence": avg_confidence,
+            "low_confidence_count": low_confidence,
+        }
+    except Exception as exc:
+        error_msg = str(exc)
+        if "42703" in error_msg or "PGRST205" in error_msg:
+            logger.warning("OCR table or column missing, returning zero stats: %s", exc)
+            return {
+                "total": 0,
+                "approved": 0,
+                "rejected": 0,
+                "pending": 0,
+                "needs_correction": 0,
+                "average_confidence": 0.0,
+                "low_confidence_count": 0,
+                "warning": "Database schema out of sync"
+            }
+        logger.exception("Failed to get OCR review stats: %s", exc)
+        raise HTTPException(status_code=500, detail=f"Failed to get OCR review stats: {exc}")

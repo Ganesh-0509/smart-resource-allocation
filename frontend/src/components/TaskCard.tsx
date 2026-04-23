@@ -50,31 +50,35 @@ export default function TaskCard({ task, onSelect, isSelected }: TaskCardProps) 
       type="button"
       onClick={() => onSelect(task)}
       className={[
-        "w-full rounded-xl border bg-white p-4 text-left shadow-sm transition-all",
-        "hover:-translate-y-0.5 hover:shadow-md",
-        isSelected ? "border-[#1D9E75] ring-2 ring-[#1D9E75]/15" : "border-slate-200",
+        "w-full rounded-2xl border p-3.5 text-left transition-all",
+        "hover:shadow-lg hover:shadow-[#1A3C2E]/5",
+        isSelected 
+          ? "border-[#E8712A] bg-[#FEF0E6]/20 ring-1 ring-[#E8712A]" 
+          : "border-slate-50 bg-white hover:border-[#1A3C2E]/10",
       ].join(" ")}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-base font-semibold text-slate-900">{task.title}</h3>
-          <p className="mt-1 text-sm text-slate-600">{task.ward || "Location unknown"}</p>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1">
+          <h3 className="text-sm font-black text-[#1A3C2E] leading-tight">{task.title}</h3>
+          <p className="mt-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{task.ward || "Global Ward"}</p>
         </div>
-        <UrgencyBadge score={task.urgency_score} />
+        <div className="shrink-0 scale-75 origin-top-right">
+          <UrgencyBadge score={task.urgency_score} />
+        </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-        <span className="inline-flex items-center gap-2 rounded-md bg-emerald-50 px-2 py-1 font-medium text-emerald-700">
-          <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-[#1D9E75] text-[10px] font-bold text-white">
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-[9px] font-black uppercase tracking-widest">
+        <span className="inline-flex items-center gap-1.5 rounded-lg bg-[#EAF4EE] px-2 py-1 text-[#1A3C2E]">
+          <span className="inline-flex h-3 w-3 items-center justify-center rounded-md bg-[#1A3C2E] text-[6px] text-white">
             {meta.icon}
           </span>
           {meta.label}
         </span>
-        <span className="rounded-md bg-slate-100 px-2 py-1 text-slate-700">
-          Households: {task.household_count ?? 1}
+        <span className="text-slate-400">
+           HH: {task.household_count ?? 1}
         </span>
-        <span className="rounded-md bg-slate-100 px-2 py-1 text-slate-700">
-          {formatRelativeTime(task.created_at)}
+        <span className="text-slate-400">
+          • {formatRelativeTime(task.created_at)}
         </span>
       </div>
     </button>

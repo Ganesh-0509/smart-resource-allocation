@@ -6,27 +6,27 @@ function getUrgencyMeta(score: number): { label: string; classes: string } {
   if (score >= 80) {
     return {
       label: "Critical",
-      classes: "border border-red-200 bg-red-100 text-red-700",
+      classes: "bg-red-50 text-red-600 ring-1 ring-red-200",
     };
   }
 
   if (score >= 60) {
     return {
-      label: "High",
-      classes: "border border-orange-200 bg-orange-100 text-orange-700",
+      label: "High Impact",
+      classes: "bg-[#FEF0E6] text-[#E8712A] ring-1 ring-[#F5A26F]/30",
     };
   }
 
   if (score >= 40) {
     return {
-      label: "Medium",
-      classes: "border border-yellow-200 bg-yellow-100 text-yellow-800",
+      label: "Routine",
+      classes: "bg-[#EAF4EE] text-[#1A3C2E] ring-1 ring-[#4A8C6A]/20",
     };
   }
 
   return {
-    label: "Low",
-    classes: "border border-slate-200 bg-slate-100 text-slate-700",
+    label: "Low Priority",
+    classes: "bg-slate-50 text-slate-400 ring-1 ring-slate-200",
   };
 }
 
@@ -36,8 +36,8 @@ export default function UrgencyBadge({ score }: UrgencyBadgeProps) {
 
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${urgency.classes}`}
-      title={`Urgency score: ${safeScore}`}
+      className={`inline-flex items-center rounded-lg px-2.5 py-1 text-[10px] font-black uppercase tracking-widest ${urgency.classes}`}
+      title={`Severity Level: ${safeScore}%`}
     >
       {urgency.label}
     </span>

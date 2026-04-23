@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from "react";
 
-export type Role = "coordinator" | "volunteer" | "fieldworker";
+export type Role = "coordinator" | "volunteer" | "fieldworker" | "admin";
 
 type RoleDisplayConfig = {
   label: string;
@@ -30,14 +30,14 @@ const ROLE_CONFIG: RoleConfigMap = {
     label: "Coordinator",
     description: "Oversees operations, assigns tasks, and tracks platform-wide progress.",
     homeRoute: "/coordinator",
-    allowedRoutes: ["/", "/coordinator", "/assignments", "/tasks/new", "/heatmap", "/survey/upload", "/admin"],
+    allowedRoutes: ["/", "/coordinator", "/assignments", "/ocr/review", "/analytics", "/batch-matching", "/heatmap"],
     color: "bg-green-500",
   },
   volunteer: {
     label: "Volunteer",
     description: "Views personal assignments, updates availability, and completes tasks.",
     homeRoute: "/volunteer/dashboard",
-    allowedRoutes: ["/", "/volunteer/register", "/volunteer/dashboard"],
+    allowedRoutes: ["/", "/volunteer/register", "/volunteer/dashboard", "/tasks/new", "/survey/upload"],
     color: "bg-purple-500",
   },
   fieldworker: {
@@ -46,6 +46,13 @@ const ROLE_CONFIG: RoleConfigMap = {
     homeRoute: "/survey/upload",
     allowedRoutes: ["/", "/survey/upload", "/tasks/new", "/heatmap"],
     color: "bg-orange-500",
+  },
+  admin: {
+    label: "Admin",
+    description: "Full system access for management and audit logs.",
+    homeRoute: "/admin",
+    allowedRoutes: ["/", "/admin"],
+    color: "bg-slate-900",
   },
 };
 

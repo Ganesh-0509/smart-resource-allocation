@@ -6,6 +6,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { getVolunteer, getVolunteerTasks, updateAvailability } from "../api/volunteers";
 import { acceptAssignment, declineAssignment, checkInAssignment, checkOutAssignment } from "../api/assignments";
 import UrgencyBadge from "../components/UrgencyBadge";
+import VolunteerScheduling from "../components/VolunteerScheduling";
 import type { Assignment, Task, Volunteer } from "../types";
 
 type TaskRow = {
@@ -15,16 +16,6 @@ type TaskRow = {
 
 type Trend = "up" | "down" | "flat";
 
-const skillPalette = [
-  "bg-emerald-100 text-emerald-800",
-  "bg-blue-100 text-blue-800",
-  "bg-amber-100 text-amber-800",
-  "bg-violet-100 text-violet-800",
-  "bg-rose-100 text-rose-800",
-  "bg-cyan-100 text-cyan-800",
-  "bg-lime-100 text-lime-800",
-  "bg-slate-200 text-slate-700",
-];
 
 function formatDateTime(value?: string | null): string {
   if (!value) {
@@ -76,14 +67,14 @@ function PerformanceRing({ score }: { score: number }) {
   const offset = circumference - (normalized / 100) * circumference;
 
   return (
-    <div className="relative h-28 w-28">
+    <div className="relative h-28 w-28 drop-shadow-sm">
       <svg viewBox="0 0 120 120" className="h-28 w-28 -rotate-90">
-        <circle cx="60" cy="60" r={radius} className="fill-none stroke-slate-200" strokeWidth="10" />
+        <circle cx="60" cy="60" r={radius} className="fill-none stroke-slate-50" strokeWidth="10" />
         <circle
           cx="60"
           cy="60"
           r={radius}
-          className="fill-none stroke-[#1D9E75] transition-all duration-500"
+          className="fill-none stroke-[#E8712A] transition-all duration-700"
           strokeWidth="10"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
@@ -91,8 +82,8 @@ function PerformanceRing({ score }: { score: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold text-slate-900">{normalized}</span>
-        <span className="text-[11px] uppercase tracking-wide text-slate-500">Score</span>
+        <span className="text-3xl font-black text-[#1A3C2E] font-['Instrument_Serif']">{normalized}</span>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-[#E8712A]">Rep</span>
       </div>
     </div>
   );
@@ -100,19 +91,19 @@ function PerformanceRing({ score }: { score: number }) {
 
 function StatsCard({ label, value, trend }: { label: string; value: string; trend?: Trend }) {
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-2 text-2xl font-bold text-[#1D9E75]">{value}</p>
+    <article className="rounded-[1.5rem] bg-white p-6 shadow-[0_20px_50px_rgba(26,60,46,0.04)] border border-[#114B3B]/5">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
+      <p className="mt-2 text-3xl font-black text-[#1A3C2E] font-['Instrument_Serif']">{value}</p>
       {trend && (
         <p
           className={[
-            "mt-1 text-xs font-medium",
-            trend === "up" ? "text-emerald-700" : trend === "down" ? "text-red-600" : "text-slate-500",
+            "mt-2 text-[11px] font-bold uppercase tracking-tight",
+            trend === "up" ? "text-emerald-600" : trend === "down" ? "text-red-500" : "text-slate-400",
           ].join(" ")}
         >
-          {trend === "up" && "↑ Up vs last week"}
-          {trend === "down" && "↓ Down vs last week"}
-          {trend === "flat" && "→ Same as last week"}
+          {trend === "up" && "↑ Improving pace"}
+          {trend === "down" && "↓ Dropping pace"}
+          {trend === "flat" && "→ Steady pace"}
         </p>
       )}
     </article>
@@ -314,42 +305,42 @@ export default function VolunteerDashboard() {
 
       {!initialLoading && volunteer && (
         <>
-          <section className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <section className="rounded-[2rem] bg-white p-8 shadow-[0_40px_100px_rgba(26,60,46,0.06)] border border-[#114B3B]/5">
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">{volunteer.name}</h1>
-                <p className="mt-1 text-sm text-slate-600">Volunteer Dashboard</p>
+                <h1 className="text-3xl font-black text-[#1A3C2E] font-['Instrument_Serif'] tracking-tight">{volunteer.name}</h1>
+                <p className="mt-1 text-sm text-slate-400 font-bold uppercase tracking-widest">Active Volunteer Hub</p>
 
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-6 flex flex-wrap gap-2">
                   {(volunteer.skills || []).map((skill, index) => (
                     <span
                       key={`${skill}-${index}`}
-                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${skillPalette[index % skillPalette.length]}`}
+                      className="rounded-full bg-[#EAF4EE] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#1A3C2E]/70"
                     >
                       {skill}
                     </span>
                   ))}
                 </div>
 
-                <div className="mt-4 flex items-center gap-3">
-                  <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                <div className="mt-8 flex items-center gap-3">
+                  <label className="inline-flex items-center gap-3 text-sm text-slate-600 font-bold cursor-pointer hover:text-[#1A3C2E] transition-colors">
                     <input
                       type="checkbox"
                       checked={Boolean(volunteer.availability)}
                       onChange={(event) => availabilityMutation.mutate(event.target.checked)}
                       disabled={availabilityMutation.isPending}
-                      className="h-4 w-4 accent-[#1D9E75]"
+                      className="h-5 w-5 accent-[#E8712A] rounded-lg"
                     />
                     Available to help right now
                   </label>
                 </div>
               </div>
 
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-10 bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100">
                 <PerformanceRing score={volunteer.performance_score} />
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-500">Total Tasks Done</p>
-                  <p className="mt-1 text-3xl font-bold text-[#1D9E75]">{volunteer.total_tasks_done}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total Deployments</p>
+                  <p className="mt-1 text-4xl font-black text-[#1A3C2E] font-['Instrument_Serif']">{volunteer.total_tasks_done}</p>
                 </div>
               </div>
             </div>
@@ -468,6 +459,8 @@ export default function VolunteerDashboard() {
               </div>
             )}
           </section>
+
+          <VolunteerScheduling volunteerId={volunteer.id} volunteerName={volunteer.name} />
         </>
       )}
     </div>

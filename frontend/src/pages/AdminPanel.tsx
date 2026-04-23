@@ -55,21 +55,21 @@ export default function AdminPanel() {
     <div className="space-y-6">
       <Toaster position="top-right" toastOptions={{ duration: 2400 }} />
 
-      <section className="rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
-        <h1 className="text-3xl font-semibold text-slate-900">Admin Panel</h1>
-        <p className="mt-2 text-slate-600">Monitor volunteers, availability, and operational performance.</p>
+      <section className="rounded-[2rem] bg-white p-8 shadow-[0_40px_100px_rgba(26,60,46,0.06)] border border-[#114B3B]/5">
+        <h1 className="text-4xl font-black text-[#1A3C2E] font-['Instrument_Serif'] tracking-tight">Governance Control</h1>
+        <p className="mt-2 text-slate-500 font-medium">Monitor Bharat’s response network, volunteer deployment, and operational performance.</p>
         <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Total Volunteers</p>
-            <p className="mt-2 text-3xl font-bold text-[#1D9E75]">{volunteers.length}</p>
+          <article className="rounded-xl bg-slate-50/50 p-6 border border-slate-100">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total Volunteers</p>
+            <p className="mt-2 text-3xl font-black text-[#1A3C2E] font-['Instrument_Serif']">{volunteers.length}</p>
           </article>
-          <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Available Now</p>
-            <p className="mt-2 text-3xl font-bold text-[#1D9E75]">{volunteers.filter((item) => item.availability).length}</p>
+          <article className="rounded-xl bg-slate-50/50 p-6 border border-slate-100">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Available Now</p>
+            <p className="mt-2 text-3xl font-black text-[#E8712A] font-['Instrument_Serif']">{volunteers.filter((item) => item.availability).length}</p>
           </article>
-          <article className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">High Performers</p>
-            <p className="mt-2 text-3xl font-bold text-[#1D9E75]">{volunteers.filter((item) => item.performance_score >= 80).length}</p>
+          <article className="rounded-xl bg-slate-50/50 p-6 border border-slate-100">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">High Performers</p>
+            <p className="mt-2 text-3xl font-black text-[#1A3C2E] font-['Instrument_Serif']">{volunteers.filter((item) => item.performance_score >= 80).length}</p>
           </article>
         </div>
       </section>
@@ -93,16 +93,16 @@ export default function AdminPanel() {
       )}
 
       {!volunteersQuery.isLoading && !volunteersQuery.isError && (
-        <section className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <section className="overflow-x-auto rounded-[2rem] bg-white shadow-[0_20px_50px_rgba(26,60,46,0.04)] border border-[#114B3B]/5">
           <table className="min-w-[760px] w-full text-left">
-            <thead className="bg-slate-50">
+            <thead className="bg-[#EAF4EE]">
               <tr>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">Name</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">Phone</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">Skills</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">Performance</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">Availability</th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600">Actions</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#1A3C2E]/60">Name</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#1A3C2E]/60">Phone</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#1A3C2E]/60">Skills</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#1A3C2E]/60">Performance</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#1A3C2E]/60">Availability</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#1A3C2E]/60">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -125,19 +125,19 @@ export default function AdminPanel() {
                       <p className="text-sm font-semibold text-slate-900">{volunteer.name}</p>
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-700">{volunteer.phone || "-"}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-4">
                       <div className="flex max-w-sm flex-wrap gap-1.5">
                         {(volunteer.skills || []).map((skill) => (
                           <span
                             key={`${volunteer.id}-${skill}`}
-                            className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700"
+                            className="rounded-lg bg-slate-50 px-2 py-1 text-[10px] font-bold uppercase tracking-tight text-slate-500 border border-slate-100"
                           >
                             {skill}
                           </span>
                         ))}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm font-semibold text-[#1D9E75]">{Math.round(volunteer.performance_score || 0)}</td>
+                    <td className="px-6 py-4 text-sm font-black text-[#1A3C2E] font-['Instrument_Serif']">{Math.round(volunteer.performance_score || 0)}</td>
                     <td className="px-4 py-3">
                       <label className="inline-flex items-center gap-2 text-sm text-slate-700">
                         <input
@@ -150,7 +150,7 @@ export default function AdminPanel() {
                             })
                           }
                           disabled={isAvailabilityPending || isDeletePending}
-                          className="h-4 w-4 accent-[#1D9E75]"
+                          className="h-5 w-5 accent-[#E8712A]"
                         />
                         {volunteer.availability ? "Available" : "Unavailable"}
                       </label>

@@ -221,27 +221,27 @@ export default function VolunteerRegister() {
 
   if (registeredVolunteer) {
     return (
-      <section className="mx-auto max-w-2xl rounded-2xl border border-emerald-100 bg-white p-8 text-center shadow-sm">
-        <h1 className="text-3xl font-bold text-slate-900">Welcome to Namma Connect!</h1>
-        <p className="mt-3 text-slate-600">
+      <section className="mx-auto max-w-2xl rounded-[2rem] bg-white p-12 text-center shadow-[0_40px_100px_rgba(26,60,46,0.06)] border border-[#114B3B]/5">
+        <h1 className="text-4xl font-black text-[#1A3C2E] font-['Instrument_Serif'] tracking-tight">Welcome to Namma Connect!</h1>
+        <p className="mt-4 text-slate-500 font-medium">
           You&apos;ll receive an SMS when a task matches your skills.
         </p>
         <button
           type="button"
           onClick={() => navigate("/volunteer/dashboard")}
-          className="mt-6 inline-flex items-center justify-center rounded-md bg-[#1D9E75] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#187f5f]"
+          className="mt-10 inline-flex items-center justify-center rounded-2xl bg-[#1A3C2E] px-8 py-4 text-base font-bold text-white shadow-xl shadow-[#1A3C2E]/10 transition-all hover:bg-[#2D5E47] hover:-translate-y-1 active:scale-95"
         >
-          Go to my dashboard
+          Enter Volunteer Dashboard →
         </button>
       </section>
     );
   }
 
   return (
-    <section className="mx-auto max-w-3xl rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm sm:p-8">
-      <h1 className="text-3xl font-bold text-slate-900">Volunteer Registration</h1>
-      <p className="mt-2 text-slate-600">
-        Join Namma Connect and help communities across Tamil Nadu faster.
+    <section className="mx-auto max-w-3xl rounded-[2rem] bg-white p-8 shadow-[0_40px_100px_rgba(26,60,46,0.06)] border border-[#114B3B]/5 sm:p-12">
+      <h1 className="text-4xl font-black text-[#1A3C2E] font-['Instrument_Serif'] tracking-tight">Volunteer Registration</h1>
+      <p className="mt-2 text-slate-500 font-medium">
+        Join Bharat&apos;s digital response network and help communities faster.
       </p>
 
       <form className="mt-6 space-y-6" onSubmit={handleSubmit(onSubmit)}>
@@ -253,7 +253,7 @@ export default function VolunteerRegister() {
             id="name"
             type="text"
             {...register("name")}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-[#1D9E75]"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none transition focus:border-[#1A3C2E] font-medium"
             placeholder="Enter your full name"
           />
           {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>}
@@ -284,10 +284,10 @@ export default function VolunteerRegister() {
                   type="button"
                   onClick={() => toggleSkill(skill.value)}
                   className={[
-                    "rounded-full border px-3 py-2 text-xs font-medium transition",
+                    "rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all",
                     checked
-                      ? "border-[#1D9E75] bg-[#1D9E75]/10 text-[#1D9E75]"
-                      : "border-slate-300 bg-white text-slate-700 hover:border-slate-400",
+                      ? "bg-[#E8712A] text-white shadow-lg shadow-[#E8712A]/20"
+                      : "bg-slate-50 text-slate-400 hover:bg-slate-100",
                   ].join(" ")}
                 >
                   {skill.label}
@@ -318,9 +318,9 @@ export default function VolunteerRegister() {
                 type="button"
                 onClick={handleUseMyLocation}
                 disabled={geoLoading}
-                className="inline-flex items-center rounded-md bg-[#1D9E75] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#187f5f] disabled:opacity-60"
+                className="inline-flex items-center rounded-xl bg-[#1A3C2E] px-4 py-2.5 text-[11px] font-bold uppercase tracking-widest text-white shadow-lg shadow-[#1A3C2E]/10 transition-all hover:bg-[#2D5E47] disabled:opacity-60"
               >
-                {geoLoading ? "Getting location..." : "Use my location"}
+                {geoLoading ? "Capturing..." : "Use my location"}
               </button>
               {lat !== null && lng !== null && (
                 <p className="mt-2 text-xs text-slate-600">
@@ -342,7 +342,7 @@ export default function VolunteerRegister() {
                   id="ward"
                   type="text"
                   {...register("ward")}
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-[#1D9E75]"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none transition focus:border-[#1A3C2E] font-medium"
                   placeholder="e.g. Ward 12"
                 />
                 {errors.ward && <p className="mt-1 text-xs text-red-600">{errors.ward.message}</p>}
@@ -354,7 +354,7 @@ export default function VolunteerRegister() {
                 <select
                   id="district"
                   {...register("district")}
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-[#1D9E75]"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none transition focus:border-[#1A3C2E] font-bold"
                 >
                   <option value="">Select district</option>
                   {districtList.map((district) => (
@@ -384,9 +384,9 @@ export default function VolunteerRegister() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="inline-flex w-full items-center justify-center rounded-md bg-[#1D9E75] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#187f5f] disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex w-full items-center justify-center rounded-2xl bg-[#1A3C2E] px-8 py-4 text-base font-bold text-white shadow-xl shadow-[#1A3C2E]/10 transition-all hover:bg-[#2D5E47] hover:-translate-y-1 active:scale-95 disabled:opacity-70"
         >
-          {isSubmitting ? "Registering..." : "Register as Volunteer"}
+          {isSubmitting ? "Processing..." : "Complete Registration →"}
         </button>
       </form>
     </section>

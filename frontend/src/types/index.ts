@@ -141,3 +141,96 @@ export interface OCRResult {
 export interface DeleteVolunteerResponse {
   message: string;
 }
+
+export interface SchedulingSlot {
+  id: string;
+  volunteer_id: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_recurring: boolean;
+  is_available: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VolunteerSchedule {
+  volunteer_id: string;
+  volunteer_name: string;
+  slots: SchedulingSlot[];
+}
+
+export interface OCRReviewItem {
+  id: string;
+  image_url: string;
+  raw_ocr_text: string;
+  confidence_score: number;
+  extracted_task_id: string | null;
+  needs_review: boolean;
+  review_status: string;
+  created_at: string;
+}
+
+export interface OCRReviewStats {
+  total: number;
+  approved: number;
+  rejected: number;
+  pending: number;
+  needs_correction: number;
+  average_confidence: number;
+  low_confidence_count: number;
+}
+
+export interface VolunteerImpactMetrics {
+  total_hours_worked: number;
+  households_served: number;
+  tasks_completed: number;
+  avg_completion_time_hours: number | null;
+  impact_score: number;
+}
+
+export interface DistrictImpactMetrics {
+  district: string;
+  total_households_served: number;
+  total_tasks_completed: number;
+  active_volunteers: number;
+  total_volunteer_hours: number;
+  avg_task_completion_rate: number;
+}
+
+export interface TaskTemplate {
+  id: string;
+  name: string;
+  need_type: string;
+  description: string | null;
+  base_urgency_score: number;
+  required_skills: string[];
+  estimated_hours: number;
+  is_active: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BatchMatchSuggestion {
+  id: string;
+  task_id: string;
+  volunteer_id: string;
+  match_score: number;
+  skill_score: number | null;
+  distance_score: number | null;
+  availability_score: number | null;
+  suggested_at: string;
+  accepted_at: string | null;
+  rejected_at: string | null;
+}
+
+export interface BatchAssignment {
+  id: string;
+  task_count: number;
+  volunteer_count: number;
+  matched_count: number;
+  status: string;
+  notes: string | null;
+  created_at: string;
+}

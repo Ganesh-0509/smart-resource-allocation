@@ -22,10 +22,10 @@ export default function VolunteerCard({ volunteer, onAssign, isAssigning }: Volu
   const performanceScore = Math.min(100, Math.max(0, Math.round(volunteer.performance_score || 0)));
 
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <article className="rounded-xl bg-white p-4 shadow-sm border border-[#114B3B]/5 hover:bg-slate-50 transition-all">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#1D9E75]/15 text-sm font-bold text-[#1D9E75]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EAF4EE] text-base font-black text-[#1A3C2E] shadow-sm">
             {getInitials(volunteer.name)}
           </div>
           <div>
@@ -42,38 +42,38 @@ export default function VolunteerCard({ volunteer, onAssign, isAssigning }: Volu
         </div>
 
         <div className="text-right">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Match Score</p>
-          <p className="text-3xl font-bold leading-none text-[#1D9E75]">{volunteer.match_score}</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Match Rank</p>
+          <p className="text-4xl font-black leading-none text-[#1A3C2E] font-['Instrument_Serif'] mt-1">{volunteer.match_score}</p>
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         {(volunteer.skills || []).map((skill) => (
-          <span key={skill} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+          <span key={skill} className="rounded-lg bg-[#EAF4EE] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#1A3C2E]">
             {skill}
           </span>
         ))}
       </div>
 
-      <div className="mt-4 space-y-2.5">
-        <MatchScoreBar label="Skill" score={volunteer.skill_score} color="#1D9E75" />
-        <MatchScoreBar label="Proximity" score={volunteer.distance_score} color="#0EA5E9" />
-        <MatchScoreBar label="Availability" score={availabilityScore} color="#F59E0B" />
-        <MatchScoreBar label="Performance" score={performanceScore} color="#8B5CF6" />
+      <div className="mt-6 space-y-3">
+        <MatchScoreBar label="Skill Match" score={volunteer.skill_score} color="#1A3C2E" />
+        <MatchScoreBar label="Proximity" score={volunteer.distance_score} color="#E8712A" />
+        <MatchScoreBar label="Active" score={availabilityScore} color="#F5A26F" />
+        <MatchScoreBar label="Performance" score={performanceScore} color="#4A8C6A" />
       </div>
 
       <button
         type="button"
         disabled={isAssigning}
         onClick={() => onAssign(volunteer)}
-        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#1D9E75] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#17805f] disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#1A3C2E] px-6 py-3 text-sm font-bold text-white shadow-xl shadow-[#1A3C2E]/10 transition-all hover:bg-[#2D5E47] hover:-translate-y-1 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isAssigning && (
-          <svg viewBox="0 0 24 24" className="h-4 w-4 animate-spin" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg viewBox="0 0 24 24" className="h-5 w-5 animate-spin" fill="none" stroke="currentColor" strokeWidth="3">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 3a9 9 0 1 0 9 9" />
           </svg>
         )}
-        {isAssigning ? "Assigning..." : "Assign"}
+        {isAssigning ? "Deploying..." : "Deploy Volunteer →"}
       </button>
     </article>
   );
