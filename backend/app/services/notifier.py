@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+from typing import List, Dict
 
 from dotenv import load_dotenv
 
@@ -40,6 +41,7 @@ async def _send_sms(to_phone: str, message: str) -> bool:
 
     try:
         client = Client(sid, token)
+        # Using asyncio.to_thread to avoid blocking the event loop with the Twilio SDK's sync call
         await asyncio.to_thread(
             client.messages.create,
             to=to_phone,
@@ -65,11 +67,44 @@ async def send_assignment_sms(
         f"Hello {volunteer_name}! A new task needs your help in {ward}: {task_title}. "
         "Please open your dashboard to accept. - Namma Connect NGO"
     )
+    return await _send_sms(volunteer_phone, message)
 
-    sent = await _send_sms(volunteer_phone, message)
-    if sent:
-        logger.info("Assignment notification handled for task_id=%s", task_id)
-    return sent
+
+async def send_batch_sms(volunteers: List[Dict], task: Dict) -> Dict:
+    """
+    Notify multiple volunteers about an urgent task in parallel.
+    """
+    ward = task.get("ward") or "your area"
+    title = task.get("title") or "Urgent Task"
+    task_id = str(task.get("id"))
+    
+    message = f"Namma Connect: Urgent task in {ward} — {title}. Reply ACCEPT to take this task. Task ID: {task_id}"
+    
+    phones = [v.get("phone") for v in volunteers if v.get("phone")]
+    if not phones:
+        return {"sent": 0, "failed": 0}
+        
+    tasks = [_send_sms(phone, message) for phone in phones]
+    results = await asyncio.gather(*tasks)
+    
+    sent_count = sum(1 for r in results if r)
+    failed_count = len(results) - sent_count
+    
+    logger.info("Batch SMS sent for task %s: %d sent, %d failed", task_id, sent_count, failed_count)
+    return {"sent": sent_count, "failed": failed_count}
+
+
+async def send_acceptance_confirmation(volunteer_phone: str, task_title: str, ward: str) -> bool:
+    """Notify the winner of an urgent task."""
+    message = f"Namma Connect: You have been assigned to {task_title}. Please head to {ward} immediately."
+    return await _send_sms(volunteer_phone, message)
+
+
+async def send_acceptance_cancellation(phones: List[str], task_title: str) -> None:
+    """Notify other volunteers that an urgent task has been taken."""
+    message = f"Namma Connect: The urgent task '{task_title}' has already been assigned to another volunteer. Thank you for your readiness!"
+    tasks = [_send_sms(phone, message) for phone in phones]
+    await asyncio.gather(*tasks)
 
 
 async def send_completion_thanks(
@@ -82,5 +117,4 @@ async def send_completion_thanks(
         f"Thank you {volunteer_name}! Task '{task_title}' marked complete. "
         "Your performance score has been updated. - Namma Connect"
     )
-
     return await _send_sms(volunteer_phone, message)

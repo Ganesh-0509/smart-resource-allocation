@@ -67,6 +67,10 @@ class TaskCreate(BaseModel):
         default="manual",
         description="How this task was created (manual, OCR, API, etc.).",
     )
+    ngo_id: Optional[UUID] = Field(
+        default=None,
+        description="ID of the NGO that owns this task.",
+    )
 
     @field_validator("urgency_score")
     @classmethod
@@ -140,6 +144,10 @@ class TaskUpdate(BaseModel):
     source: Optional[str] = Field(
         default=None,
         description="How this task was created (manual, OCR, API, etc.).",
+    )
+    ngo_id: Optional[UUID] = Field(
+        default=None,
+        description="ID of the NGO that owns this task.",
     )
 
     @field_validator("urgency_score")

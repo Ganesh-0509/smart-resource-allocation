@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db.supabase_client import test_connection
-from app.routers import analytics, assignments, batch_matching, ocr, scheduling, tasks, volunteers
+from app.routers import analytics, assignments, auth, batch_matching, ocr, scheduling, tasks, volunteers
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +42,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
 app.include_router(volunteers.router)
 app.include_router(tasks.router)
 app.include_router(assignments.router)

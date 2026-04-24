@@ -1,3 +1,5 @@
+import React from "react";
+
 type Activity = {
   time: string;
   action: string;
@@ -9,61 +11,93 @@ type ActivityFeedProps = {
   activities: Activity[];
 };
 
-function getActionStyles(action: string): string {
-  const normalized = action.toLowerCase();
+function formatTimeAgo(isoString: string): string {
+  const date = new Date(isoString);
+  const now = new Date();
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  if (normalized.includes("assigned")) {
-    return "border-l-[#1A3C2E] bg-[#EAF4EE]";
-  }
-
-  if (normalized.includes("completed")) {
-    return "border-l-[#E8712A] bg-[#FEF0E6]";
-  }
-
-  if (normalized.includes("submitted")) {
-    return "border-l-[#E8712A] bg-[#FEF0E6]";
-  }
-
-  return "border-l-slate-300 bg-slate-50/50";
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
 }
 
-function formatTimestamp(time: string): string {
-  const parsed = new Date(time);
-  if (Number.isNaN(parsed.getTime())) {
-    return time;
+function getActionBadge(action: string): { label: string; style: string } {
+  const normalized = action.toLowerCase();
+  
+  if (normalized.includes("batch_sms_sent")) {
+    return { label: "Urgent Broadcast", style: "bg-purple-100 text-purple-700 border-purple-200" };
   }
-  return parsed.toLocaleString();
+  if (normalized.includes("assigned")) {
+    return { label: "Task Assigned", style: "bg-blue-100 text-blue-700 border-blue-200" };
+  }
+  if (normalized.includes("completed")) {
+    return { label: "Task Completed", style: "bg-emerald-100 text-emerald-700 border-emerald-200" };
+  }
+  if (normalized.includes("registered")) {
+    return { label: "New Volunteer", style: "bg-teal-100 text-teal-700 border-teal-200" };
+  }
+  
+  return { label: action, style: "bg-slate-100 text-slate-700 border-slate-200" };
 }
 
 export default function ActivityFeed({ activities }: ActivityFeedProps) {
   if (!activities.length) {
     return (
-      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h3 className="text-base font-semibold text-slate-900">Recent Activity</h3>
-        <p className="mt-2 text-sm text-slate-500">No activity yet.</p>
+      <section className="rounded-2xl bg-white p-8 shadow-sm border border-slate-100 text-center">
+        <p className="text-sm font-medium text-slate-400">No recent activity detected on the ground.</p>
       </section>
     );
   }
 
   return (
-    <section className="rounded-2xl bg-white p-4 shadow-sm border border-[#114B3B]/5">
-      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Field Activity Stream</h3>
-      <div className="max-h-64 space-y-3 overflow-y-auto pr-1 custom-scrollbar">
-        {activities.map((item, index) => (
-          <article
-            key={`${item.time}-${item.actor}-${index}`}
-            className={`rounded-xl border-l-[6px] p-4 transition-all hover:translate-x-1 ${getActionStyles(item.action)}`}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <p className="text-sm text-slate-800 leading-relaxed">
-                <span className="font-bold text-[#1A3C2E]">{item.actor}</span>{" "}
-                <span className="font-bold text-slate-400 lowercase tracking-tight">{item.action}</span>{" "}
-                <span className="font-bold text-[#1A3C2E]">{item.task_title}</span>
-              </p>
-              <time className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-slate-400">{formatTimestamp(item.time)}</time>
-            </div>
-          </article>
-        ))}
+    <section className="rounded-3xl bg-white p-6 shadow-sm border border-slate-100">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Field Activity Stream</h3>
+        <div className="flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-[10px] font-bold text-slate-400 uppercase">Live Update</span>
+        </div>
+      </div>
+      
+      <div className="max-h-[400px] space-y-4 overflow-y-auto pr-2 custom-scrollbar">
+        {activities.map((item, index) => {
+          const badge = getActionBadge(item.action);
+          return (
+            <article
+              key={`${item.time}-${item.actor}-${index}`}
+              className="group relative flex gap-4 transition-all duration-300"
+            >
+              {/* Timeline dot */}
+              <div className="flex flex-col items-center">
+                <div className="h-2 w-2 rounded-full bg-slate-200 ring-4 ring-white" />
+                {index !== activities.length - 1 && <div className="w-[1px] flex-1 bg-slate-100" />}
+              </div>
+
+              <div className="flex-1 pb-6">
+                <div className="flex items-center justify-between gap-4 mb-1">
+                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${badge.style}`}>
+                    {badge.label}
+                  </span>
+                  <time className="text-[10px] font-bold text-slate-400 uppercase">
+                    {formatTimeAgo(item.time)}
+                  </time>
+                </div>
+                
+                <p className="text-sm text-slate-600 leading-snug">
+                  <span className="font-bold text-slate-900">{item.actor}</span>{" "}
+                  {item.action.replace(/_/g, " ")}{" "}
+                  {item.task_title && (
+                    <span className="font-bold text-[#1A3C2E]">"{item.task_title}"</span>
+                  )}
+                </p>
+              </div>
+            </article>
+          );
+        })}
       </div>
     </section>
   );

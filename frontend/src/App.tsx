@@ -21,10 +21,14 @@ import VolunteerRegister from "./pages/VolunteerRegister";
 import LoginPage from "./pages/LoginPage";
 import VolunteerSchedulePage from "./pages/VolunteerSchedulePage";
 import VolunteerExecutionPage from "./pages/VolunteerExecutionPage";
+import VolunteerUpload from "./pages/VolunteerUpload";
 import OCRReviewQueue from "./components/OCRReviewQueue";
 import ImpactDashboard from "./components/ImpactDashboard";
 import BatchMatchingBoard from "./components/BatchMatchingBoard";
 import { useRole } from "./context/RoleContext";
+import NGOLogin from "./pages/NGOLogin";
+import NGORegister from "./pages/NGORegister";
+import AuthGuard from "./components/AuthGuard";
 
 type NavItem = {
   to: string;
@@ -83,9 +87,8 @@ function Layout() {
             {/* Logo Left */}
             <NavLink to="/" className="flex items-center gap-2.5 text-[22px] font-black text-[#1A3C2E] font-['Instrument_Serif']">
               <div className="w-2 h-2 rounded-full bg-[#E8712A] animate-pulse"></div>
-              <span>Namma Connect</span>
+              <span>Namma Connect {localStorage.getItem('ngo_name') ? `— ${localStorage.getItem('ngo_name')}` : ''}</span>
             </NavLink>
-
             {/* Nav Links Center */}
             <nav className="hidden lg:flex flex-1 items-center justify-center gap-10">
               {isLandingPage ? (
@@ -97,7 +100,7 @@ function Layout() {
               ) : !isPublicPage && (
                 <div className="flex items-center gap-1">
                   {navItems
-                    .filter(item => ["Coordinator", "Volunteer Dashboard", "Impact Analytics", "Heatmap"].includes(item.label))
+                    .filter(item => ["Coordinator", "Volunteer Profile", "Impact Analytics", "Heatmap"].includes(item.label))
                     .map((item) => (
                     <NavLink
                       key={item.to}
@@ -111,13 +114,14 @@ function Layout() {
                       {item.label}
                     </NavLink>
                   ))}
+                  <UrgentBadge />
                   {navItems
-                    .filter(item => !["Home", "Coordinator", "Volunteer Dashboard", "Impact Analytics", "Heatmap"].includes(item.label))
-                    .length > 0 && navItems.filter(item => ["Coordinator", "Volunteer Dashboard", "Impact Analytics", "Heatmap"].includes(item.label)).length > 0 && (
+                    .filter(item => !["Home", "Coordinator", "Volunteer Profile", "Impact Analytics", "Heatmap"].includes(item.label))
+                    .length > 0 && (
                     <div className="h-4 w-[1px] bg-slate-200 mx-3"></div>
                   )}
                   {navItems
-                    .filter(item => !["Home", "Coordinator", "Volunteer Dashboard", "Impact Analytics", "Heatmap"].includes(item.label))
+                    .filter(item => !["Home", "Coordinator", "Volunteer Profile", "Impact Analytics", "Heatmap"].includes(item.label))
                     .map((item) => (
                     <NavLink
                       key={item.to}
@@ -137,6 +141,13 @@ function Layout() {
 
             {/* CTA Right */}
             <div className="flex items-center gap-6">
+              {!isPublicPage && localStorage.getItem('ngo_name') && (
+                <div className="hidden xl:block text-right">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Organization</p>
+                  <p className="text-sm font-bold text-[#1A3C2E]">{localStorage.getItem('ngo_name')}</p>
+                </div>
+              )}
+
               <div className="hidden lg:flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 bg-slate-50">
                 <span className={`h-1.5 w-1.5 rounded-full ${backendConnected ? "bg-[#10b981]" : "bg-red-500"} animate-pulse`} />
                 {backendConnected ? "Live" : "Down"}
@@ -144,7 +155,14 @@ function Layout() {
               
               {!isLoginPage && (
                 <button
-                  onClick={() => navigate(isLandingPage ? "/login" : "/")}
+                  onClick={() => {
+                    if (isLandingPage) {
+                      navigate("/login");
+                    } else {
+                      localStorage.clear();
+                      navigate("/ngo/login");
+                    }
+                  }}
                   className="rounded-full bg-[#1A3C2E] px-6 py-2.5 text-sm font-bold text-white shadow-xl shadow-[#1A3C2E]/10 transition-all hover:bg-[#2D5E47] hover:-translate-y-0.5 active:scale-95"
                 >
                   {isLandingPage ? "Enter Dashboard →" : "Sign Out"}
@@ -187,6 +205,7 @@ function Layout() {
           <Outlet />
         ) : (
           <div className="mx-auto max-w-[1200px] px-6 py-10">
+            {location.pathname === "/coordinator" && <PlatformStats />}
             <Outlet />
           </div>
         )}
@@ -238,6 +257,64 @@ function ProtectedRoute({ children, path }: { children: React.ReactNode; path: s
   return <>{children}</>;
 }
 
+function UrgentBadge() {
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  const { data: count = 0 } = useQuery({
+    queryKey: ["urgent-tasks-count"],
+    queryFn: async () => {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`${API_URL}/api/tasks/?status=open`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return 0;
+      const tasks = await res.json();
+      return tasks.filter((t: any) => t.urgency_score >= 60).length;
+    },
+    refetchInterval: 60_000,
+  });
+
+  if (count === 0) return null;
+
+  return (
+    <div className="flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-red-600 border border-red-100 animate-pulse">
+      <span className="h-1.5 w-1.5 rounded-full bg-red-600" />
+      {count} Urgent Needs
+    </div>
+  );
+}
+
+function PlatformStats() {
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+  const { data: stats } = useQuery({
+    queryKey: ["platform-stats"],
+    queryFn: async () => {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`${API_URL}/api/dashboard/stats`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.json();
+    },
+    refetchInterval: 30_000,
+  });
+
+  if (!stats) return null;
+
+  return (
+    <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+      {[
+        { label: "Active NGOs", value: stats.active_ngos || 3, color: "text-blue-600", bg: "bg-blue-50" },
+        { label: "Total Volunteers", value: stats.active_volunteers, color: "text-teal-600", bg: "bg-teal-50" },
+        { label: "Completed Today", value: stats.completed_today, color: "text-emerald-600", bg: "bg-emerald-50" },
+      ].map((stat, i) => (
+        <div key={i} className={`rounded-2xl border border-slate-100 bg-white p-6 shadow-sm flex flex-col items-center justify-center text-center transition-all hover:shadow-md`}>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">{stat.label}</p>
+          <p className={`text-3xl font-black ${stat.color}`}>{stat.value}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function NotFoundPage() {
   const navigate = useNavigate();
 
@@ -262,9 +339,12 @@ function App() {
       <Route element={<Layout />}>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/coordinator" element={<ProtectedRoute path="/coordinator"><CoordinatorDashboard /></ProtectedRoute>} />
-        <Route path="/coordinator/batch-match" element={<ProtectedRoute path="/coordinator/batch-match"><BatchMatchingBoard /></ProtectedRoute>} />
-        <Route path="/coordinator/ocr-queue" element={<ProtectedRoute path="/coordinator/ocr-queue"><OCRReviewQueue /></ProtectedRoute>} />
+        <Route path="/ngo/login" element={<NGOLogin />} />
+        <Route path="/ngo/register" element={<NGORegister />} />
+        <Route path="/coordinator" element={<AuthGuard><ProtectedRoute path="/coordinator"><CoordinatorDashboard /></ProtectedRoute></AuthGuard>} />
+        <Route path="/volunteers/upload" element={<AuthGuard><ProtectedRoute path="/coordinator"><VolunteerUpload /></ProtectedRoute></AuthGuard>} />
+        <Route path="/coordinator/batch-match" element={<AuthGuard><ProtectedRoute path="/coordinator/batch-match"><BatchMatchingBoard /></ProtectedRoute></AuthGuard>} />
+        <Route path="/coordinator/ocr-queue" element={<AuthGuard><ProtectedRoute path="/coordinator/ocr-queue"><OCRReviewQueue /></ProtectedRoute></AuthGuard>} />
         <Route path="/analytics" element={<ProtectedRoute path="/analytics"><ImpactDashboard /></ProtectedRoute>} />
         <Route path="/volunteer/dashboard" element={<ProtectedRoute path="/volunteer/dashboard"><VolunteerDashboard /></ProtectedRoute>} />
         <Route path="/volunteer/schedule" element={<ProtectedRoute path="/volunteer/schedule"><VolunteerSchedulePage /></ProtectedRoute>} />
@@ -273,7 +353,7 @@ function App() {
         <Route path="/heatmap" element={<ProtectedRoute path="/heatmap"><NeedHeatmap /></ProtectedRoute>} />
         <Route path="/survey/upload" element={<ProtectedRoute path="/survey/upload"><SurveyUpload /></ProtectedRoute>} />
         <Route path="/tasks/new" element={<ProtectedRoute path="/tasks/new"><TaskCreate /></ProtectedRoute>} />
-        <Route path="/admin" element={<ProtectedRoute path="/admin"><AdminPanel /></ProtectedRoute>} />
+        <Route path="/admin" element={<AuthGuard><ProtectedRoute path="/admin"><AdminPanel /></ProtectedRoute></AuthGuard>} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

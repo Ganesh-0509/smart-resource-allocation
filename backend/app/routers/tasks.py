@@ -3,13 +3,18 @@ from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, Depends
 from pydantic import BaseModel
 
-from app.db.supabase_client import supabase
+from app.db.supabase_client import supabase, get_current_ngo_id
 from app.models.task import NeedType, TaskAssign, TaskCreate, TaskResponse, TaskStatus
 from app.services.matcher import match_volunteers
-from app.services.notifier import send_assignment_sms
+from app.services.notifier import (
+    send_assignment_sms, 
+    send_batch_sms, 
+    send_acceptance_confirmation, 
+    send_acceptance_cancellation
+)
 from app.services.geocoder import ensure_coordinates
 
 logger = logging.getLogger(__name__)
@@ -146,12 +151,16 @@ def _fetch_activity_records() -> list[dict]:
 # -----------------
 
 @router.post("/api/tasks/", response_model=TaskResponse, status_code=201, tags=["tasks"])
-async def create_task(task: TaskCreate):
+async def create_task(
+    task: TaskCreate, 
+    background_tasks: BackgroundTasks,
+    ngo_id: str = Depends(get_current_ngo_id)
+):
     """Create a new community need task."""
     try:
         data = task.model_dump(mode="json")
-        # New tasks usually start as open
         data["status"] = TaskStatus.OPEN.value
+        data["ngo_id"] = ngo_id
         
         # Ensure coordinates are not 0,0
         data["lat"], data["lng"] = ensure_coordinates(
@@ -165,10 +174,124 @@ async def create_task(task: TaskCreate):
         if not response.data:
             raise HTTPException(status_code=400, detail="Failed to create task")
             
-        return response.data[0]
+        created_task = response.data[0]
+        
+        # Automatic notifications for urgent tasks (urgency >= 60)
+        if created_task.get("urgency_score", 0) >= 60:
+            background_tasks.add_task(
+                handle_urgent_task_notifications, 
+                created_task, 
+                ngo_id
+            )
+            
+        return created_task
     except Exception as e:
         logger.error(f"Error creating task: {e}")
         raise HTTPException(status_code=400, detail=f"Database error: {str(e)}")
+
+
+async def handle_urgent_task_notifications(task: dict, ngo_id: str):
+    """Background task to find matches and notify volunteers for urgent needs."""
+    try:
+        # 1. Fetch available volunteers for this NGO
+        vol_res = (
+            supabase.table("volunteers")
+            .select("*")
+            .eq("ngo_id", ngo_id)
+            .eq("availability", True)
+            .execute()
+        )
+        volunteers = vol_res.data or []
+        
+        if not volunteers:
+            return
+
+        # 2. Match and pick top 5
+        matches = match_volunteers(task, volunteers)
+        top5 = matches[:5]
+        
+        # 3. Send batch SMS
+        await send_batch_sms(top5, task)
+        
+        # 4. Log to activity_log
+        _log_activity(
+            action="batch_sms_sent", 
+            actor="system", 
+            task_id=str(task["id"])
+        )
+    except Exception as e:
+        logger.error(f"Failed to handle urgent notifications: {e}")
+
+
+class AcceptTaskRequest(BaseModel):
+    volunteer_id: UUID
+
+
+@router.post("/api/tasks/{id}/accept", tags=["tasks"])
+async def accept_task(id: UUID, req: AcceptTaskRequest):
+    """Endpoint for a volunteer to accept an urgent task broadcast."""
+    try:
+        # 1. Check task status
+        task_res = supabase.table("tasks").select("*").eq("id", str(id)).execute()
+        if not task_res.data:
+            raise HTTPException(status_code=404, detail="Task not found")
+        
+        task = task_res.data[0]
+        if task["status"] != TaskStatus.OPEN.value:
+            return {"assigned": False, "message": "Task already taken"}
+
+        # 2. Assign the volunteer (atomic update)
+        update_res = (
+            supabase.table("tasks")
+            .update({"status": TaskStatus.ASSIGNED.value})
+            .eq("id", str(id))
+            .eq("status", TaskStatus.OPEN.value)
+            .execute()
+        )
+        
+        if not update_res.data:
+            return {"assigned": False, "message": "Task already taken"}
+
+        # 3. Create assignment record
+        assignment_payload = {
+            "task_id": str(id),
+            "volunteer_id": str(req.volunteer_id),
+            "assigned_by": "system_auto_accept",
+            "sla_hours": 2,
+            "sla_deadline": (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat(),
+        }
+        supabase.table("assignments").insert(assignment_payload).execute()
+
+        # 4. Notify winner and notify others
+        winner_res = supabase.table("volunteers").select("phone").eq("id", str(req.volunteer_id)).execute()
+        if winner_res.data and winner_res.data[0].get("phone"):
+            await send_acceptance_confirmation(
+                winner_res.data[0]["phone"], 
+                task["title"], 
+                task["ward"]
+            )
+        
+        # Send cancellation to other potentially notified volunteers
+        vol_res = (
+            supabase.table("volunteers")
+            .select("*")
+            .eq("ngo_id", task["ngo_id"])
+            .eq("availability", True)
+            .neq("id", str(req.volunteer_id))
+            .execute()
+        )
+        others = match_volunteers(task, vol_res.data or [])[:4]
+        other_phones = [o["phone"] for o in others if o.get("phone")]
+        if other_phones:
+            await send_acceptance_cancellation(other_phones, task["title"])
+
+        _log_activity(action="Assigned", actor=str(req.volunteer_id), task_id=str(id))
+
+        return {"assigned": True, "volunteer_id": req.volunteer_id}
+
+    except Exception as e:
+        logger.error(f"Error in accept_task: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/api/tasks/", response_model=List[TaskResponse], tags=["tasks"])

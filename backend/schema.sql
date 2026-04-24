@@ -3,14 +3,25 @@
 
 create extension if not exists "pgcrypto";
 
+create table if not exists ngos (
+	id uuid primary key default gen_random_uuid(),
+	name text not null,
+	email text unique not null,
+	created_at timestamptz not null default timezone('utc', now())
+);
+
+
 create table if not exists volunteers (
 	id uuid primary key default gen_random_uuid(),
+	ngo_id uuid not null,
 	name text not null,
 	phone text,
 	skills text[] not null default '{}',
 	lat double precision not null,
 	lng double precision not null,
 	availability boolean not null default true,
+	ward text,
+	district text,
 	performance_score double precision not null default 0,
 	total_tasks_done integer not null default 0,
 	created_at timestamptz not null default timezone('utc', now()),
@@ -19,6 +30,7 @@ create table if not exists volunteers (
 
 create table if not exists tasks (
 	id uuid primary key default gen_random_uuid(),
+	ngo_id uuid not null,
 	title text not null,
 	need_type text not null check (need_type in ('nutrition', 'medical', 'shelter', 'education', 'water', 'livelihood', 'other')),
 	description text,
@@ -38,6 +50,7 @@ create table if not exists tasks (
 
 create table if not exists assignments (
 	id uuid primary key default gen_random_uuid(),
+	ngo_id uuid not null,
 	task_id uuid not null references tasks(id) on delete cascade,
 	volunteer_id uuid not null references volunteers(id) on delete cascade,
 	assigned_by text not null,
@@ -87,6 +100,7 @@ create table if not exists scheduling_slots (
 
 create table if not exists survey_uploads (
 	id uuid primary key default gen_random_uuid(),
+	ngo_id uuid not null,
 	image_url text not null,
 	raw_ocr_text text,
 	confidence_score double precision not null default 0,
@@ -185,6 +199,7 @@ create table if not exists batch_match_suggestions (
 -- Batch assignment tracking
 create table if not exists batch_assignments (
 	id uuid primary key default gen_random_uuid(),
+	ngo_id uuid not null,
 	created_by uuid references volunteers(id) on delete set null,
 	task_count integer not null default 0,
 	volunteer_count integer not null default 0,
@@ -343,3 +358,11 @@ create trigger trg_batch_assignments_updated_at
 before update on batch_assignments
 for each row
 execute function set_updated_at_timestamp();
+
+-- Multi-tenancy isolation policies
+alter table volunteers enable row level security;
+alter table tasks enable row level security;
+
+create policy "ngo_isolation" on volunteers using (ngo_id = auth.uid());
+create policy "ngo_isolation" on tasks using (ngo_id = auth.uid());
+

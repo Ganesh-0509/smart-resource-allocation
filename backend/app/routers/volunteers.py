@@ -1,10 +1,13 @@
+import csv
+import io
 from uuid import UUID
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, File, UploadFile, Depends
 from pydantic import ValidationError
 
-from app.db.supabase_client import supabase
+from app.db.supabase_client import supabase, get_current_ngo_id
+from app.services.geocoder import geocode_address
 from app.models.volunteer import (
     VolunteerCreate,
     VolunteerResponse,
@@ -12,6 +15,78 @@ from app.models.volunteer import (
 )
 
 router = APIRouter(prefix="/api/volunteers", tags=["volunteers"])
+
+
+@router.post("/bulk-upload")
+async def bulk_upload_volunteers(
+    file: UploadFile = File(...),
+    ngo_id: str = Depends(get_current_ngo_id)
+):
+    """
+    Upload a CSV list of volunteers.
+    Format: name, phone, skills, ward, district
+    """
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="Only CSV files are allowed")
+
+    try:
+        content = await file.read()
+        decoded = content.decode('utf-8')
+        stream = io.StringIO(decoded)
+        reader = csv.DictReader(stream)
+
+        inserted = 0
+        failed = 0
+        errors = []
+
+        for row in reader:
+            try:
+                name = row.get('name', '').strip()
+                phone = row.get('phone', '').strip()
+                skills_str = row.get('skills', '').strip()
+                ward = row.get('ward', '').strip()
+                district = row.get('district', '').strip()
+
+                if not name or not district:
+                    raise ValueError("Name and District are required fields")
+
+                # Parse skills (comma separated)
+                skills = [s.strip().lower() for s in skills_str.split(',')] if skills_str else []
+                
+                # Geocode location
+                lat, lng = geocode_address(ward, district)
+
+                volunteer_data = {
+                    "ngo_id": ngo_id,
+                    "name": name,
+                    "phone": phone,
+                    "skills": skills,
+                    "ward": ward,
+                    "district": district,
+                    "lat": lat,
+                    "lng": lng,
+                    "availability": True
+                }
+
+                response = supabase.table("volunteers").insert(volunteer_data).execute()
+                
+                if response.data:
+                    inserted += 1
+                else:
+                    failed += 1
+                    errors.append(f"Row {reader.line_num}: Failed to save to database")
+
+            except Exception as e:
+                failed += 1
+                errors.append(f"Row {reader.line_num}: {str(e)}")
+
+        return {
+            "inserted": inserted,
+            "failed": failed,
+            "errors": errors
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"File processing error: {str(e)}")
 
 
 @router.post("/register", response_model=VolunteerResponse, status_code=201)
