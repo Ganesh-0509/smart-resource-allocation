@@ -1,4 +1,3 @@
-import React from "react";
 
 type Activity = {
   time: string;
