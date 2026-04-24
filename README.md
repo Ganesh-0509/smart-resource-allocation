@@ -1,107 +1,84 @@
-# <p align="center"><img src="frontend/public/brand-logo.svg" width="60" height="60" alt="Namma Connect Logo" /><br/>Namma Connect</p>
+# <p align="center"><img src="frontend/public/brand-logo.svg" width="80" height="80" alt="Namma Connect Logo" /><br/>Namma Connect</p>
 
 <p align="center">
-  <b>Empowering NGOs across Bharat with AI-assisted volunteer coordination and real-time community insights.</b>
+  <b>The Unified Digital Infrastructure for Hyper-Local Community Impact across Bharat.</b><br/>
+  <i>Bridging the gap between field reports and volunteer action with AI and Multi-Tenancy.</i>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Status-Live-0D9488?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Stack-React_|_FastAPI_|_Gemini-114B3B?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/AI-Vision_|_Matching_|_LLM-emerald?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Status-Production--Ready-0D9488?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Architecture-Multi--Tenant-114B3B?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/AI-Gemini_|_OCR_|_Matching-emerald?style=for-the-badge" />
 </p>
 
 ---
 
 ## 🌿 The Vision
-In the heart of community service, logistics often becomes the bottleneck for impact. **Namma Connect** is the digital infrastructure built to move resources faster. By combining **Computer Vision**, **Large Language Models (Gemini)**, and **Geospatial Intelligence**, we transform analog field reports into organized, high-priority volunteer deployments in seconds.
+In the heart of community service, logistics often becomes the bottleneck for impact. **Namma Connect** is an enterprise-grade, multi-tenant platform designed to empower NGOs to coordinate volunteer efforts with surgical precision. By combining **Geospatial Intelligence**, **Automated SMS Dispatch**, and **LLM-driven scoring**, we ensure that the right help reaches the right place in minutes, not days.
 
 ---
 
-## ✨ Key Capabilities
+## ✨ Core Pillars
 
-| Feature | Description | Tech |
+| Pillar | Capability | Technology |
 | :--- | :--- | :--- |
+| **🏢 Multi-Tenancy** | Data isolation per NGO with secure registration & login. | Supabase RLS + JWT |
+| **🚨 Urgent Dispatch** | Auto-broadcast tasks (Urgency ≥ 60) to top 5 local volunteers. | Parallel SMS (Twilio) |
 | **📷 Vision AI Entry** | Transform handwritten field surveys into digital tasks instantly. | Tesseract + OpenCV |
-| **🧠 Smart Prioritization** | LLM-driven urgency scoring ensures the most critical needs are met first. | Google Gemini 1.5 Pro |
-| **🧭 Precision Matching** | Skills-based algorithm identifies the top 10 local volunteers by proximity. | Custom Scoring Hub |
-| **🗺️ Impact Heatmaps** | Live geospatial visualization of community needs for coordinators. | React Leaflet |
-| **📱 SMS Dispatch** | Automated volunteer notifications for rapid field deployment. | Twilio Integration |
+| **🧠 Smart Matching** | Weighted ranking by skills, distance, and historical performance. | Custom Matching Hub |
+| **🗺️ Impact Insights** | Live geospatial heatmaps and cross-NGO platform statistics. | React Leaflet |
 
 ---
 
-## 🛠️ Technological Core
+## 🛠️ Technological Stack
 
-### **Frontend**
-- **Architecture:** React 18 + TypeScript (Vite)
-- **State Management:** TanStack Query (React Query)
-- **UI System:** Custom 'Grounded Trust' Design (Tailwind CSS)
-- **Maps:** Leaflet.js with dynamic cluster markers
+### **Frontend (Vite + React)**
+- **UI/UX:** Custom "Grounded Trust" design system with Tailwind CSS.
+- **State:** TanStack Query for high-performance data fetching and caching.
+- **Security:** JWT-based Auth Guard protecting sensitive coordinator routes.
+- **Visuals:** Timeline-based activity streams and pulsing urgent-need badges.
 
-### **Backend**
-- **Engine:** FastAPI (High-performance Python)
-- **Database:** Supabase (PostgreSQL + Row Level Security)
-- **AI/ML:** 
-  - **Gemini AI:** Task classification & priority scoring
-  - **Vision Engine:** OCR pipeline for field log digitization
-- **Communcations:** Twilio SMS API
+### **Backend (FastAPI)**
+- **Engine:** Asynchronous Python with FastAPI for concurrent request handling.
+- **Auth:** NGO-specific authentication with unique `ngo_id` isolation.
+- **Geocoding:** Native integration with **Nominatim API** for real-time ward/district to coordinate mapping.
+- **Logic:** Background tasks for SMS broadcasts and matching calculations.
 
 ---
 
-## 🏗️ Project Architecture
+## 🚀 Experience the Demo
 
-```text
-smart-resource-allocation/
-├── 📂 backend/
-│   ├── 📂 app/
-│   │   ├── 📂 routers/    # Domain-specific API endpoints
-│   │   ├── 📂 services/   # AI Matching, Gemini NLP, OCR Hub
-│   │   └── 📂 db/         # Supabase client & abstractions
-│   └── 📄 requirements.txt
-├── 📂 frontend/
-│   ├── 📂 src/
-│   │   ├── 📂 pages/      # Dashboard, Map, Coordinator Hub
-│   │   ├── 📂 components/ # Glassmorphic UI components
-│   │   └── 📂 api/        # Axios clients & Signal handlers
-│   └── 📄 package.json
-└── 📄 README.md
-```
+The platform comes pre-configured with three realistic demo NGOs, each operating in a different Indian hub:
 
----
+*   **Aarogya Seva (Chennai)**: Medical focus, coordinating health camps in Adyar and Mylapore.
+*   **Vidya Jyothi (Bengaluru)**: Education focus, tutoring youth in Koramangala and Whitefield.
+*   **Anna Daan Trust (Madurai)**: Nutrition focus, managing food relief in Anna Nagar and KK Nagar.
 
-## 🚀 Quick Start
-
-### 1. Requirements
-- Python 3.10+
-- Node.js 20+
-- Supabase Project (Tables schema provided in migration scripts)
-
-### 2. Physical Setup
-```bash
-git clone https://github.com/Ganesh-0509/smart-resource-allocation.git
-cd smart-resource-allocation
-```
-
-### 3. Backend Deployment
-```bash
-pip install -r requirements.txt
-# Copy environment variables from .env.example
-uvicorn app.main:app --reload
-```
-
-### 4. Frontend Launch
-```bash
-cd frontend
-npm install
-npm run dev
-```
+### Quick Start
+1.  **Clone & Install**:
+    ```bash
+    git clone https://github.com/Ganesh-0509/smart-resource-allocation.git
+    cd smart-resource-allocation
+    pip install -r backend/requirements.txt
+    cd frontend && npm install
+    ```
+2.  **Seed Data**:
+    ```bash
+    # Set dev flag
+    $env:ALLOW_DEV_SEED="true"
+    python backend/seed_data.py
+    ```
+3.  **Launch**:
+    - Backend: `uvicorn app.main:app --reload`
+    - Frontend: `npm run dev`
 
 ---
 
 ## 🎨 Design Philosophy: "Grounded Trust"
-Namma Connect uses a custom design system built for institutional credibility.
-- **Bone (#F9F7F2)**: To reduce eye strain and feel more human-centric.
-- **Forest (#114B3B)**: For deep trustworthiness and authority.
-- **Teal (#0D9488)**: Luminous action points to guide the user naturally.
+Namma Connect uses a custom palette designed for clarity and authority:
+- **Bone (#F9F7F2)**: Soft, human-centric background for prolonged usage.
+- **Forest (#114B3B)**: Deep green representing growth and institutional trust.
+- **Cinnabar (#E8712A)**: Strategic highlight for urgent action points.
 
 ---
 
