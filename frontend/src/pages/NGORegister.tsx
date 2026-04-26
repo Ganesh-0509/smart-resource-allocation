@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { registerNGO } from '../api/auth';
+import { registerNGO } from '../services/auth';
 
 const NGORegister: React.FC = () => {
   const [name, setName] = useState('');

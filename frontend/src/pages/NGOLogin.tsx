@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { loginNGO } from '../api/auth';
+import { loginNGO } from '../services/auth';
 
 const NGOLogin: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -16,9 +16,9 @@ const NGOLogin: React.FC = () => {
     try {
       const data = await loginNGO(email, password);
       localStorage.setItem('access_token', data.access_token);
-      localStorage.setItem('ngo_id', data.ngo_id);
-      localStorage.setItem('ngo_name', data.name);
-      navigate('/coordinator/dashboard'); // Redirect to coordinator dashboard
+      // TODO: Move role and identity resolution to a backend-driven session/user profile fetch
+      // TODO: Do not store user ID or role in localStorage; fetch them from a protected profile endpoint
+      navigate('/ngo/dashboard');
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {

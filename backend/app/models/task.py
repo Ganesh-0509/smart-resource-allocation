@@ -20,6 +20,8 @@ class TaskStatus(str, Enum):
     OPEN = "open"
     ASSIGNED = "assigned"
     COMPLETED = "completed"
+    FAILED = "failed"
+    ESCALATED = "escalated"
 
 
 class TaskCreate(BaseModel):
@@ -180,6 +182,10 @@ class TaskResponse(TaskCreate):
     status: TaskStatus = Field(
         ...,
         description="Current lifecycle status of the task.",
+    )
+    escalation_level: int = Field(
+        default=0,
+        description="Current escalation level of the task.",
     )
     source_image_url: Optional[str] = Field(
         default=None,

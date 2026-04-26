@@ -11,7 +11,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
 
   if (!token) {
     // Redirect to login but save the current location they were trying to go to
-    return <Navigate to="/ngo/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

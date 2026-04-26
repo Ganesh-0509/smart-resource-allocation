@@ -6,7 +6,7 @@ import {
   deleteSchedulingSlot,
   getVolunteerSchedule,
   updateSchedulingSlot,
-} from "../api/scheduling";
+} from "../services/scheduling";
 
 interface VolunteerSchedulingProps {
   volunteerId: string;

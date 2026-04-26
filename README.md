@@ -1,92 +1,135 @@
-# <p align="center"><img src="frontend/public/brand-logo.svg" width="80" height="80" alt="Namma Connect Logo" /><br/>Namma Connect</p>
+# <p align="center"><img src="frontend/public/logo.png" width="120" alt="Namma Connect Logo" /><br/>Namma Connect</p>
 
 <p align="center">
-  <b>The Unified Digital Infrastructure for Hyper-Local Community Impact across Bharat.</b><br/>
-  <i>Bridging the gap between field reports and volunteer action with AI and Multi-Tenancy.</i>
+  <b>Data-Driven Volunteer Coordination System for Hyper-Local Community Impact.</b><br/>
+  <i>Transforming community reports into verified action through structured NGO workflows.</i>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Status-Production--Ready-0D9488?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Status-Prototype%20(Production--Aligned)-0D9488?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Architecture-Multi--Tenant-114B3B?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/AI-Gemini_|_OCR_|_Matching-emerald?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Focus-NGO%20Workflow%20System-emerald?style=for-the-badge" />
 </p>
 
 ---
 
 ## 🌿 The Vision
-In the heart of community service, logistics often becomes the bottleneck for impact. **Namma Connect** is an enterprise-grade, multi-tenant platform designed to empower NGOs to coordinate volunteer efforts with surgical precision. By combining **Geospatial Intelligence**, **Automated SMS Dispatch**, and **LLM-driven scoring**, we ensure that the right help reaches the right place in minutes, not days.
+
+In real-world NGO operations, the biggest challenge is not collecting data — it is **turning scattered community needs into coordinated action**.
+
+**Namma Connect** is a **multi-tenant, workflow-driven NGO coordination platform** that bridges the gap between:
+
+> 📥 Field Reports → 🧠 Decision Making → 🤝 Volunteer Action
+
+The system ensures that:
+- Raw community data is **validated before action**
+- Tasks are **prioritized and assigned intelligently**
+- Volunteers are **matched based on real-world constraints**
 
 ---
 
-## ✨ Core Pillars
+## 🔄 Core Workflow (Real NGO Model)
 
-| Pillar | Capability | Technology |
-| :--- | :--- | :--- |
-| **🏢 Multi-Tenancy** | Data isolation per NGO with secure registration & login. | Supabase RLS + JWT |
-| **🚨 Urgent Dispatch** | Auto-broadcast tasks (Urgency ≥ 60) to top 5 local volunteers. | Parallel SMS (Twilio) |
-| **📷 Vision AI Entry** | Transform handwritten field surveys into digital tasks instantly. | Tesseract + OpenCV |
-| **🧠 Smart Matching** | Weighted ranking by skills, distance, and historical performance. | Custom Matching Hub |
-| **🗺️ Impact Insights** | Live geospatial heatmaps and cross-NGO platform statistics. | React Leaflet |
+This platform is designed around a **realistic NGO operational pipeline**:
+
+```mermaid
+graph TD
+    A[Field Report / Survey] --> B[Intake System]
+    B --> C[Triage & Review]
+    C -->|Approved| D[Convert to Task]
+    C -->|Rejected| E[Archived]
+    D --> F[Smart Matching]
+    F --> G[Assignment & Acceptance]
+    G --> H[Task Execution]
+    H --> I[Completion + Audit Log]
+    I --> J[Analytics & Impact]
+```
 
 ---
 
-## 🛠️ Technological Stack
+## ✨ Core Features
 
-### **Frontend (Vite + React)**
-- **UI/UX:** Custom "Grounded Trust" design system with Tailwind CSS.
-- **State:** TanStack Query for high-performance data fetching and caching.
-- **Security:** JWT-based Auth Guard protecting sensitive coordinator routes.
-- **Visuals:** Timeline-based activity streams and pulsing urgent-need badges.
+### 🧾 Intake & Triage System
+- Collect reports via field worker submissions or OCR-based survey uploads.
+- Reports are **reviewed before becoming tasks** to ensure data quality.
+- Full status tracking from *Pending* to *Converted*.
+
+### 🧠 Smart Volunteer Matching
+- Intelligent scoring based on **Skills (40%)**, **Distance (30%)**, **Availability (20%)**, and **Reliability (10%)**.
+- Returns the **Top 3** best-suited volunteers for any mission.
+- Explains matching logic via transparent score breakdowns.
+
+### 🙋 Volunteer Lifecycle Management
+- Controlled onboarding workflow: *Pending → Approved → Active*.
+- Only verified and active volunteers participate in mission matching.
+- Tracks performance, completion rates, and historical impact.
+
+### 🚨 Escalation & Reliability System
+- Automatically handles task non-acceptance via time-based escalation.
+- Triggers smart reassignment to the next best candidate if SLAs are breached.
+- Ensures **no community need is left unattended**.
+
+### 🏢 Multi-Tenant Architecture
+- Strict data isolation using `ngo_id` at the database and API level.
+- Each NGO operates in its own secure workspace (Reports, Tasks, Volunteers, Analytics).
+- Secure JWT-based authentication with role-based access control.
+
+---
+
+## 🛠️ Tech Stack
+
+### **Frontend (React + Vite)**
+- **UI:** Custom "Forest & Clay" design system with Tailwind CSS.
+- **State:** TanStack Query for optimized data fetching and real-time UI updates.
+- **Navigation:** Role-aware sidebar layout for NGO, Volunteer, and Field personas.
 
 ### **Backend (FastAPI)**
-- **Engine:** Asynchronous Python with FastAPI for concurrent request handling.
-- **Auth:** NGO-specific authentication with unique `ngo_id` isolation.
-- **Geocoding:** Native integration with **Nominatim API** for real-time ward/district to coordinate mapping.
-- **Logic:** Background tasks for SMS broadcasts and matching calculations.
+- **API:** Asynchronous Python with FastAPI and proper JWT verification.
+- **Service Layer:** Modular architecture for Matching, OCR, and Audit logging.
+- **Database:** Supabase (PostgreSQL) with strict tenant-scoping logic.
 
 ---
 
-## 🚀 Experience the Demo
+## 🚀 Getting Started
 
-The platform comes pre-configured with three realistic demo NGOs, each operating in a different Indian hub:
+### 1. Clone & Install
+```bash
+git clone https://github.com/Ganesh-0509/smart-resource-allocation.git
+cd smart-resource-allocation
 
-*   **Aarogya Seva (Chennai)**: Medical focus, coordinating health camps in Adyar and Mylapore.
-*   **Vidya Jyothi (Bengaluru)**: Education focus, tutoring youth in Koramangala and Whitefield.
-*   **Anna Daan Trust (Madurai)**: Nutrition focus, managing food relief in Anna Nagar and KK Nagar.
+pip install -r backend/requirements.txt
+cd frontend && npm install
+```
 
-### Quick Start
-1.  **Clone & Install**:
-    ```bash
-    git clone https://github.com/Ganesh-0509/smart-resource-allocation.git
-    cd smart-resource-allocation
-    pip install -r backend/requirements.txt
-    cd frontend && npm install
-    ```
-2.  **Seed Data**:
-    ```bash
-    # Set dev flag
-    $env:ALLOW_DEV_SEED="true"
-    python backend/seed_data.py
-    ```
-3.  **Launch**:
-    - Backend: `uvicorn app.main:app --reload`
-    - Frontend: `npm run dev`
+### 2. Seed Development Data
+```powershell
+$env:ALLOW_DEV_SEED="true"
+python backend/seed_data.py
+```
+
+### 3. Run the Application
+**Backend:**
+```bash
+uvicorn app.main:app --reload
+```
+**Frontend:**
+```bash
+npm run dev
+```
 
 ---
 
-## 🎨 Design Philosophy: "Grounded Trust"
-Namma Connect uses a custom palette designed for clarity and authority:
-- **Bone (#F9F7F2)**: Soft, human-centric background for prolonged usage.
-- **Forest (#114B3B)**: Deep green representing growth and institutional trust.
-- **Cinnabar (#E8712A)**: Strategic highlight for urgent action points.
+## 🧪 Demo Flow (Recommended)
+
+1.  **Submit** a field report at `/field/report`.
+2.  **Review** the report in the NGO Triage Dashboard at `/ngo/triage`.
+3.  **Approve** and convert it into a task.
+4.  **Match** and deploy the top-ranked volunteer in the Missions board.
+5.  **Complete** the task as a volunteer and view the **Audit Trail** for transparency.
 
 ---
 
 ## 📜 License
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the MIT License. See `LICENSE` for details.
 
----
-
-<p align="center">
-  Built for <b>Bharat</b> 🇮🇳 with ❤️ by the Namma Connect Team.
-</p>
+<p align="center"> Built for <b>real-world impact</b> 🌍 with ❤️ by Ganesh Kumar T </p>

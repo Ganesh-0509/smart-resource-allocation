@@ -1,6 +1,8 @@
 import math
-from typing import Any
+import logging
+from typing import Any, List, Dict
 
+logger = logging.getLogger(__name__)
 
 def haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Return great-circle distance between two lat/lng points in kilometers."""
@@ -35,51 +37,79 @@ def _normalized_skills(skills: Any) -> set[str]:
     return {str(skill).strip().lower() for skill in skills if str(skill).strip()}
 
 
-def match_volunteers(task: dict, volunteers: list[dict]) -> list[dict]:
-    """Score and rank volunteers against a task using weighted matching criteria."""
+def match_volunteers(task: dict, volunteers: list[dict], limit: int = 3) -> list[dict]:
+    """
+    Smart Volunteer Matching Engine.
+    Scores and ranks volunteers based on:
+    - Skill Match (40%)
+    - Geographic Proximity (30%)
+    - Availability (20%)
+    - Reliability (10%)
+    """
     required_skills = _normalized_skills(task.get("required_skills", []))
     task_lat = _to_float(task.get("lat"), 0.0)
     task_lng = _to_float(task.get("lng"), 0.0)
 
-    available_volunteers = [vol for vol in volunteers if bool(vol.get("availability"))]
-    candidate_volunteers = available_volunteers if available_volunteers else volunteers
-
     ranked: list[dict] = []
 
-    for volunteer in candidate_volunteers:
+    for volunteer in volunteers:
+        # 1. Skill Match Score (40%)
         volunteer_skills = _normalized_skills(volunteer.get("skills", []))
-
         if not required_skills:
             skill_score = 100.0
         else:
             matched = len(required_skills.intersection(volunteer_skills))
             skill_score = (matched / len(required_skills)) * 100.0
 
+        # 2. Distance Score (30%)
         volunteer_lat = _to_float(volunteer.get("lat"), 0.0)
         volunteer_lng = _to_float(volunteer.get("lng"), 0.0)
         distance_km = haversine(task_lat, task_lng, volunteer_lat, volunteer_lng)
-        distance_score = max(0.0, 100.0 - distance_km * 10.0)
+        
+        # Closer is better: 100 points for 0km, 0 points for 20km or more
+        distance_score = max(0.0, 100.0 - (distance_km * 5.0))
 
+        # 3. Availability Score (20%)
+        # In this system, we use the 'availability' boolean as a primary filter, 
+        # but we also give maximum points for being currently available.
         availability_score = 100.0 if bool(volunteer.get("availability")) else 0.0
 
-        performance_score = _to_float(volunteer.get("performance_score"), 0.0)
-        performance_score = min(100.0, max(0.0, performance_score))
+        # 4. Reliability Score (10%)
+        # Based on performance_score (success rate) and total_tasks_done (experience)
+        perf = _to_float(volunteer.get("performance_score"), 0.0)
+        tasks_done = _to_float(volunteer.get("total_tasks_done"), 0.0)
+        
+        # Reliability is 80% performance, 20% experience (capped at 50 tasks)
+        exp_bonus = min(20.0, tasks_done * 0.4)
+        reliability_score = (perf * 0.8) + exp_bonus
 
+        # Final Weighted Calculation
         final_score = (
             (skill_score * 0.4)
             + (distance_score * 0.3)
             + (availability_score * 0.2)
-            + (performance_score * 0.1)
+            + (reliability_score * 0.1)
         )
 
         enriched = {
-            **volunteer,
-            "match_score": int(round(final_score)),
-            "skill_score": int(round(skill_score)),
-            "distance_score": int(round(distance_score)),
-            "distance_km": round(distance_km, 1),
+            "id": volunteer["id"],
+            "name": volunteer["name"],
+            "phone": volunteer.get("phone"),
+            "skills": volunteer.get("skills", []),
+            "match_score": round(final_score, 1),
+            "breakdown": {
+                "skill_match": round(skill_score, 1),
+                "distance": round(distance_score, 1),
+                "availability": round(availability_score, 1),
+                "reliability": round(reliability_score, 1)
+            },
+            "distance_km": round(distance_km, 2),
+            "performance_score": volunteer.get("performance_score", 0),
+            "total_tasks_done": volunteer.get("total_tasks_done", 0)
         }
         ranked.append(enriched)
 
-    ranked.sort(key=lambda item: item.get("match_score", 0), reverse=True)
-    return ranked
+    # Sort by score descending
+    ranked.sort(key=lambda item: item["match_score"], reverse=True)
+    
+    return ranked[:limit]

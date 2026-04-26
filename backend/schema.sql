@@ -24,6 +24,7 @@ create table if not exists volunteers (
 	district text,
 	performance_score double precision not null default 0,
 	total_tasks_done integer not null default 0,
+	status text not null default 'pending' check (status in ('pending', 'approved', 'active', 'inactive', 'rejected')),
 	created_at timestamptz not null default timezone('utc', now()),
 	updated_at timestamptz not null default timezone('utc', now())
 );
@@ -42,7 +43,8 @@ create table if not exists tasks (
 	required_skills text[] not null default '{}',
 	household_count integer not null default 1 check (household_count >= 1),
 	source text not null default 'manual',
-	status text not null default 'open' check (status in ('open', 'assigned', 'completed')),
+	status text not null default 'open' check (status in ('open', 'assigned', 'completed', 'failed', 'escalated')),
+	escalation_level integer not null default 0,
 	source_image_url text,
 	created_at timestamptz not null default timezone('utc', now()),
 	updated_at timestamptz not null default timezone('utc', now())
@@ -55,9 +57,11 @@ create table if not exists assignments (
 	volunteer_id uuid not null references volunteers(id) on delete cascade,
 	assigned_by text not null,
 	assigned_at timestamptz not null default timezone('utc', now()),
+	accepted_at timestamptz,
 	completed_at timestamptz,
+	failed_at timestamptz,
 	outcome text,
-	status text not null default 'assigned' check (status in ('assigned', 'accepted', 'declined', 'reassigned', 'escalated', 'completed')),
+	status text not null default 'assigned' check (status in ('assigned', 'accepted', 'in_progress', 'declined', 'reassigned', 'escalated', 'completed', 'failed')),
 	sla_deadline timestamptz,
 	sla_hours integer default 24,
 	sla_breached boolean not null default false,
@@ -101,12 +105,25 @@ create table if not exists scheduling_slots (
 create table if not exists survey_uploads (
 	id uuid primary key default gen_random_uuid(),
 	ngo_id uuid not null,
-	image_url text not null,
+	image_url text,
 	raw_ocr_text text,
 	confidence_score double precision not null default 0,
 	needs_review boolean not null default true,
+	
+	-- Structured data extracted and verified from OCR
+	title text,
+	need_type text,
+	description text,
+	urgency_score integer,
+	ward text,
+	district text,
+	lat double precision,
+	lng double precision,
+	required_skills text[] not null default '{}',
+	household_count integer default 1,
+
 	extracted_task_id uuid references tasks(id) on delete set null,
-	review_status text not null default 'pending' check (review_status in ('pending', 'approved', 'rejected', 'needs_correction')),
+	review_status text not null default 'pending' check (review_status in ('pending', 'reviewed', 'approved', 'rejected', 'needs_correction')),
 	reviewed_by uuid references volunteers(id) on delete set null,
 	reviewed_at timestamptz,
 	corrections text,
@@ -129,12 +146,15 @@ create table if not exists location_geocoding (
 	unique(ward, district)
 );
 
-create table if not exists activity_log (
+create table if not exists audit_logs (
 	id uuid primary key default gen_random_uuid(),
-	action_type text,
-	actor_id uuid,
-	task_id uuid references tasks(id) on delete set null,
-	details text,
+	ngo_id uuid,
+	user_id uuid,
+	user_role text, -- 'ngo', 'volunteer', 'field_worker', 'admin', 'system'
+	action_type text not null,
+	entity_type text not null, -- 'report', 'task', 'volunteer', 'assignment'
+	entity_id uuid,
+	description text not null,
 	created_at timestamptz not null default timezone('utc', now())
 );
 
@@ -230,7 +250,32 @@ create index if not exists idx_scheduling_slots_is_available on scheduling_slots
 create index if not exists idx_survey_uploads_review_status on survey_uploads(review_status);
 create index if not exists idx_survey_uploads_confidence_score on survey_uploads(confidence_score desc);
 create index if not exists idx_survey_uploads_needs_review on survey_uploads(needs_review);
-create index if not exists idx_location_geocoding_ward_district on location_geocoding(ward, district);
+create table if not exists intake_reports (
+	id uuid primary key default gen_random_uuid(),
+	ngo_id uuid not null,
+	source text not null check (source in ('survey', 'ocr', 'field')),
+	title text not null,
+	description text,
+	location_text text,
+	lat double precision,
+	lng double precision,
+	urgency text not null default 'medium' check (urgency in ('low', 'medium', 'high')),
+	status text not null default 'pending' check (status in ('pending', 'reviewed', 'approved', 'rejected')),
+	raw_data jsonb,
+	image_url text,
+	possible_duplicate_of uuid references intake_reports(id) on delete set null,
+	duplicate_score float default 0.0,
+	reviewed_by uuid references volunteers(id) on delete set null,
+	reviewed_at timestamptz,
+	converted_to_task_id uuid references tasks(id) on delete set null,
+	created_at timestamptz not null default timezone('utc', now()),
+	updated_at timestamptz not null default timezone('utc', now())
+);
+
+create index if not exists idx_intake_reports_ngo_id on intake_reports(ngo_id);
+create index if not exists idx_intake_reports_status on intake_reports(status);
+create index if not exists idx_intake_reports_urgency on intake_reports(urgency);
+
 create index if not exists idx_location_geocoding_confidence on location_geocoding(confidence_score desc);
 create index if not exists idx_activity_log_task_id on activity_log(task_id);
 create index if not exists idx_activity_log_created_at on activity_log(created_at desc);
@@ -286,6 +331,12 @@ execute function set_updated_at_timestamp();
 drop trigger if exists trg_location_geocoding_updated_at on location_geocoding;
 create trigger trg_location_geocoding_updated_at
 before update on location_geocoding
+for each row
+execute function set_updated_at_timestamp();
+
+drop trigger if exists trg_intake_reports_updated_at on intake_reports;
+create trigger trg_intake_reports_updated_at
+before update on intake_reports
 for each row
 execute function set_updated_at_timestamp();
 

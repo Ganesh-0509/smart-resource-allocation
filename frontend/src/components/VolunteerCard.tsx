@@ -56,10 +56,10 @@ export default function VolunteerCard({ volunteer, onAssign, isAssigning }: Volu
       </div>
 
       <div className="mt-6 space-y-3">
-        <MatchScoreBar label="Skill Match" score={volunteer.skill_score} color="#1A3C2E" />
-        <MatchScoreBar label="Proximity" score={volunteer.distance_score} color="#E8712A" />
-        <MatchScoreBar label="Active" score={availabilityScore} color="#F5A26F" />
-        <MatchScoreBar label="Performance" score={performanceScore} color="#4A8C6A" />
+        <MatchScoreBar label="Skill Match" score={volunteer.breakdown?.skill_match ?? volunteer.skill_score} color="#1A3C2E" />
+        <MatchScoreBar label="Proximity" score={volunteer.breakdown?.distance ?? volunteer.distance_score} color="#E8712A" />
+        <MatchScoreBar label="Reliability" score={volunteer.breakdown?.reliability ?? performanceScore} color="#4A8C6A" />
+        <MatchScoreBar label="Status" score={availabilityScore} color="#F5A26F" />
       </div>
 
       <button

@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import logo from "../assets/logo.png";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -9,6 +10,18 @@ export default function LandingPage() {
         .landing-page-root {
           --border: rgba(26,60,46,0.08);
         }
+
+        /* ─── NAVBAR ─── */
+        .navbar {
+          position: fixed; top: 0; left: 0; right: 0;
+          height: 80px; background: rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 0 48px; z-index: 100;
+        }
+        .nav-logo { display: flex; align-items: center; gap: 12px; }
+        .nav-logo img { width: 44px; height: 44px; border-radius: 10px; }
+        .nav-logo span { font-family: 'Instrument Serif', serif; font-size: 24px; color: var(--forest); font-weight: 900; }
 
         /* ─── HERO ─── */
         .hero {
@@ -407,8 +420,19 @@ export default function LandingPage() {
         }
       `}</style>
 
+      {/* NAVBAR */}
+      <nav className="navbar">
+        <div className="nav-logo">
+          <img src={logo} alt="Namma Connect Logo" />
+          <span>Namma Connect</span>
+        </div>
+        <div className="nav-actions">
+          <button onClick={() => navigate("/login")} className="btn-secondary" style={{ padding: '10px 24px', fontSize: '14px' }}>Login</button>
+        </div>
+      </nav>
+
       {/* HERO */}
-      <section style={{ background: "var(--warm-white)" }}>
+      <section style={{ background: "var(--warm-white)", paddingTop: '80px' }}>
         <div className="hero">
           <div className="hero-left">
             <div className="hero-eyebrow">

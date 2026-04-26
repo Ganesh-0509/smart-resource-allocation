@@ -1,65 +1,14 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 
-import { registerVolunteer } from "../api/volunteers";
+import { registerVolunteer } from "../services/volunteers";
 import type { Volunteer, VolunteerCreate, VolunteerSkill } from "../types";
+import { skillOptions, districtCoordinates, districtList } from "../utils/constants";
 
-const skillOptions: Array<{ label: string; value: VolunteerSkill }> = [
-  { label: "Nutrition", value: "nutrition" },
-  { label: "Medical", value: "medical" },
-  { label: "Education", value: "education" },
-  { label: "Logistics", value: "logistics" },
-  { label: "Counselling", value: "counselling" },
-  { label: "Construction", value: "construction" },
-  { label: "Water & Sanitation", value: "water_sanitation" },
-  { label: "Livelihood", value: "livelihood" },
-];
-
-const districtCoordinates: Record<string, { lat: number; lng: number }> = {
-  Ariyalur: { lat: 11.1398, lng: 79.0756 },
-  Chengalpattu: { lat: 12.6819, lng: 79.9888 },
-  Chennai: { lat: 13.0827, lng: 80.2707 },
-  Coimbatore: { lat: 11.0168, lng: 76.9558 },
-  Cuddalore: { lat: 11.7447, lng: 79.768 },
-  Dharmapuri: { lat: 12.1277, lng: 78.1579 },
-  Dindigul: { lat: 10.3673, lng: 77.9803 },
-  Erode: { lat: 11.341, lng: 77.7172 },
-  Kallakurichi: { lat: 11.739, lng: 78.9637 },
-  Kanchipuram: { lat: 12.8342, lng: 79.7036 },
-  Kanyakumari: { lat: 8.0883, lng: 77.5385 },
-  Karur: { lat: 10.9601, lng: 78.0766 },
-  Krishnagiri: { lat: 12.5266, lng: 78.2137 },
-  Madurai: { lat: 9.9252, lng: 78.1198 },
-  Mayiladuthurai: { lat: 11.1035, lng: 79.655 },
-  Nagapattinam: { lat: 10.7656, lng: 79.8428 },
-  Namakkal: { lat: 11.2189, lng: 78.1674 },
-  Nilgiris: { lat: 11.4064, lng: 76.6932 },
-  Perambalur: { lat: 11.2333, lng: 78.8833 },
-  Pudukkottai: { lat: 10.3833, lng: 78.8 },
-  Ramanathapuram: { lat: 9.3639, lng: 78.8395 },
-  Ranipet: { lat: 12.9273, lng: 79.3335 },
-  Salem: { lat: 11.6643, lng: 78.146 },
-  Sivaganga: { lat: 9.847, lng: 78.4836 },
-  Tenkasi: { lat: 8.9592, lng: 77.3152 },
-  Thanjavur: { lat: 10.7867, lng: 79.1378 },
-  Theni: { lat: 10.0104, lng: 77.4768 },
-  Thoothukudi: { lat: 8.7642, lng: 78.1348 },
-  Tiruchirappalli: { lat: 10.7905, lng: 78.7047 },
-  Tirunelveli: { lat: 8.7139, lng: 77.7567 },
-  Tirupattur: { lat: 12.495, lng: 78.568 },
-  Tiruppur: { lat: 11.1085, lng: 77.3411 },
-  Tiruvallur: { lat: 13.1439, lng: 79.9089 },
-  Tiruvannamalai: { lat: 12.2253, lng: 79.0747 },
-  Tiruvarur: { lat: 10.7713, lng: 79.6368 },
-  Vellore: { lat: 12.9165, lng: 79.1325 },
-  Viluppuram: { lat: 11.939, lng: 79.4861 },
-  Virudhunagar: { lat: 9.5841, lng: 77.9579 },
-};
-
-const districtList = Object.keys(districtCoordinates);
 
 const volunteerFormSchema = z
   .object({
@@ -209,10 +158,6 @@ export default function VolunteerRegister() {
 
     try {
       const response = await registerVolunteer(payload);
-      localStorage.setItem("namma_volunteer_id", response.id);
-      localStorage.setItem("volunteer_id", response.id);
-      localStorage.setItem("volunteerId", response.id);
-      localStorage.setItem("role", "volunteer");
       setRegisteredVolunteer(response);
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Registration failed. Please try again.");

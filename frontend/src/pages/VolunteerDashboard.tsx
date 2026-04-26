@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast, { Toaster } from "react-hot-toast";
 
-import { getVolunteer, getVolunteerTasks, updateAvailability } from "../api/volunteers";
-import { acceptAssignment, declineAssignment, checkInAssignment, checkOutAssignment } from "../api/assignments";
+import { getVolunteer, getVolunteerTasks, updateVolunteerAvailability } from "../services/volunteers";
+import { acceptAssignment, declineAssignment, checkInAssignment, checkOutAssignment } from "../services/assignments";
 import UrgencyBadge from "../components/UrgencyBadge";
 import VolunteerScheduling from "../components/VolunteerScheduling";
 import type { Assignment, Task, Volunteer } from "../types";
@@ -111,10 +111,9 @@ function StatsCard({ label, value, trend }: { label: string; value: string; tren
 }
 
 export default function VolunteerDashboard() {
-  const volunteerId =
-    localStorage.getItem("namma_volunteer_id") ||
-    localStorage.getItem("volunteer_id") ||
-    localStorage.getItem("volunteerId");
+  // TODO: Fetch volunteer identity from backend session/profile endpoint.
+  // DO NOT trust localStorage for identity or role authority.
+  const volunteerId = null; 
   const queryClient = useQueryClient();
 
   const volunteerQuery = useQuery<Volunteer>({
@@ -132,7 +131,7 @@ export default function VolunteerDashboard() {
   });
 
   const availabilityMutation = useMutation({
-    mutationFn: (available: boolean) => updateAvailability(volunteerId as string, available),
+    mutationFn: (available: boolean) => updateVolunteerAvailability(volunteerId as string, available),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["volunteer-profile", volunteerId] });
       toast.success("Availability updated.");
@@ -243,14 +242,17 @@ export default function VolunteerDashboard() {
 
   if (!volunteerId) {
     return (
-      <section className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-        <h1 className="text-2xl font-semibold text-slate-900">No account found</h1>
-        <p className="mt-3 text-slate-600">Please register as a volunteer to view your tasks and availability dashboard.</p>
+      <section className="rounded-[2.5rem] border border-slate-100 bg-white p-12 text-center shadow-xl max-w-lg mx-auto mt-20">
+        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-8 text-slate-300">
+           <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+        </div>
+        <h1 className="text-3xl font-black text-[#1A3C2E] font-['Instrument_Serif']">Welcome, Volunteer</h1>
+        <p className="mt-4 text-slate-500 font-medium leading-relaxed">Join our mission to support communities. Register today to start receiving task assignments.</p>
         <Link
           to="/volunteer/register"
-          className="mt-6 inline-flex items-center justify-center rounded-md bg-[#1D9E75] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#177f5e]"
+          className="mt-10 w-full inline-flex items-center justify-center rounded-2xl bg-[#1A3C2E] py-4 text-sm font-black text-white shadow-xl shadow-[#1A3C2E]/20 transition-all hover:bg-[#2D5E47]"
         >
-          Register as Volunteer
+          Begin Registration →
         </Link>
       </section>
     );
@@ -305,6 +307,38 @@ export default function VolunteerDashboard() {
 
       {!initialLoading && volunteer && (
         <>
+          {volunteer.status === 'pending' && (
+             <div className="bg-amber-50 border border-amber-100 rounded-[2rem] p-10 text-center shadow-sm">
+                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 text-amber-500 shadow-sm animate-pulse">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <h2 className="text-2xl font-black text-[#1A3C2E] font-['Instrument_Serif'] mb-2">Application Under Review</h2>
+                <p className="text-slate-600 font-medium max-w-md mx-auto">Thank you for joining us, {volunteer.name}! Our coordinators are currently reviewing your profile. You'll receive full access once approved.</p>
+             </div>
+          )}
+
+          {volunteer.status === 'rejected' && (
+             <div className="bg-red-50 border border-red-100 rounded-[2rem] p-10 text-center shadow-sm">
+                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 text-red-500 shadow-sm">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </div>
+                <h2 className="text-2xl font-black text-[#1A3C2E] font-['Instrument_Serif'] mb-2">Application Not Approved</h2>
+                <p className="text-slate-600 font-medium max-w-md mx-auto">We appreciate your interest in volunteering. Unfortunately, your application could not be approved at this time.</p>
+             </div>
+          )}
+
+          {(volunteer.status === 'approved' || volunteer.status === 'inactive') && (
+             <div className="bg-blue-50 border border-blue-100 rounded-[2rem] p-10 text-center shadow-sm">
+                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 text-blue-500 shadow-sm">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <h2 className="text-2xl font-black text-[#1A3C2E] font-['Instrument_Serif'] mb-2">Almost Ready!</h2>
+                <p className="text-slate-600 font-medium max-w-md mx-auto">Your account is approved. Please wait for an NGO coordinator to activate your profile or contact support to begin receiving assignments.</p>
+             </div>
+          )}
+
+          {volunteer.status === 'active' && (
+            <>
           <section className="rounded-[2rem] bg-white p-8 shadow-[0_40px_100px_rgba(26,60,46,0.06)] border border-[#114B3B]/5">
             <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
               <div>
@@ -375,6 +409,11 @@ export default function VolunteerDashboard() {
                         <p className="mt-1 text-xs text-slate-500">Status: {row.assignment.status}</p>
                       </div>
                       <UrgencyBadge score={row.task.urgency_score} />
+                      {row.task.status === 'escalated' && (
+                        <span className="px-2 py-0.5 bg-red-600 text-white rounded-md text-[9px] font-black uppercase tracking-tighter shadow-sm animate-pulse">
+                          High Priority
+                        </span>
+                      )}
                     </div>
 
                     <p className="mt-3 text-xs text-slate-500">Assigned: {formatDateTime(row.assignment.assigned_at || row.task.created_at)}</p>
@@ -461,6 +500,8 @@ export default function VolunteerDashboard() {
           </section>
 
           <VolunteerScheduling volunteerId={volunteer.id} volunteerName={volunteer.name} />
+            </>
+          )}
         </>
       )}
     </div>

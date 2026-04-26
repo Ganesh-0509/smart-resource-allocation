@@ -17,12 +17,15 @@ export type TaskNeedType =
   | "livelihood"
   | "other";
 
-export type TaskStatus = "open" | "assigned" | "completed";
+export type TaskStatus = "open" | "assigned" | "completed" | "failed" | "escalated";
+export type VolunteerStatus = "pending" | "approved" | "active" | "inactive" | "rejected";
 
 export interface VolunteerCreate {
   name: string;
   phone?: string | null;
   skills: VolunteerSkill[];
+  ward: string;
+  district: string;
   lat: number;
   lng: number;
   availability?: boolean;
@@ -30,6 +33,7 @@ export interface VolunteerCreate {
 
 export interface Volunteer extends VolunteerCreate {
   id: string;
+  status: VolunteerStatus;
   performance_score: number;
   total_tasks_done: number;
   created_at: string;
@@ -52,6 +56,7 @@ export interface TaskCreate {
 export interface Task extends TaskCreate {
   id: string;
   status: TaskStatus;
+  escalation_level: number;
   source_image_url?: string | null;
   created_at: string;
 }
@@ -65,6 +70,8 @@ export interface Assignment {
   completed_at?: string | null;
   outcome?: string | null;
   status: string;
+  accepted_at?: string | null;
+  failed_at?: string | null;
   sla_deadline?: string | null;
   sla_hours?: number;
   sla_breached?: boolean;
@@ -94,6 +101,12 @@ export interface VolunteerMatch extends Volunteer {
   skill_score: number;
   distance_score: number;
   distance_km: number;
+  breakdown?: {
+    skill_match: number;
+    distance: number;
+    availability: number;
+    reliability: number;
+  };
 }
 
 export interface DashboardStats {
@@ -169,6 +182,54 @@ export interface OCRReviewItem {
   needs_review: boolean;
   review_status: string;
   created_at: string;
+  title?: string;
+  need_type?: string;
+  description?: string;
+  urgency_score?: number;
+  ward?: string;
+  district?: string;
+  lat?: number;
+  lng?: number;
+  required_skills?: string[];
+  household_count?: number;
+}
+
+export type IntakeSource = "survey" | "ocr" | "field";
+export type IntakeUrgency = "low" | "medium" | "high";
+export type IntakeStatus = "pending" | "reviewed" | "approved" | "rejected";
+
+export interface IntakeReport {
+  id: string;
+  ngo_id: string;
+  source: IntakeSource;
+  title: string;
+  description?: string;
+  location_text?: string;
+  lat?: number;
+  lng?: number;
+  urgency: IntakeUrgency;
+  status: IntakeStatus;
+  possible_duplicate_of?: string;
+  duplicate_score: number;
+  raw_data?: any;
+  image_url?: string;
+  reviewed_by?: string;
+  reviewed_at?: string;
+  converted_to_task_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IntakeReportCreate {
+  title: string;
+  description?: string;
+  source: IntakeSource;
+  urgency: IntakeUrgency;
+  location_text?: string;
+  lat?: number;
+  lng?: number;
+  raw_data?: any;
+  image_url?: string;
 }
 
 export interface OCRReviewStats {
@@ -232,5 +293,17 @@ export interface BatchAssignment {
   matched_count: number;
   status: string;
   notes: string | null;
+  created_at: string;
+}
+
+export interface AuditLog {
+  id: string;
+  ngo_id: string;
+  user_id?: string;
+  user_role?: string;
+  action_type: string;
+  entity_type: string;
+  entity_id: string;
+  description: string;
   created_at: string;
 }

@@ -4,6 +4,13 @@ from datetime import datetime
 from uuid import UUID
 from enum import Enum
 
+class VolunteerStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    REJECTED = "rejected"
+
 class Skill(str, Enum):
     NUTRITION = "nutrition"
     MEDICAL = "medical"
@@ -23,6 +30,7 @@ class VolunteerCreate(BaseModel):
     availability: bool = Field(True, description="Whether the volunteer is currently available to take on tasks", examples=[True])
     ward: Optional[str] = Field(None, description="The ward where the volunteer resides", examples=["Ward 12"])
     district: str = Field(..., description="The district where the volunteer resides", examples=["Madurai"])
+    ngo_id: UUID = Field(..., description="The NGO this volunteer is registering for")
 
 class VolunteerUpdate(BaseModel):
     name: Optional[str] = Field(None, description="Full name of the volunteer", examples=["Ravi Kumar"])
@@ -36,6 +44,7 @@ class VolunteerUpdate(BaseModel):
 
 class VolunteerResponse(VolunteerCreate):
     id: UUID = Field(..., description="Unique identifier for the volunteer", examples=["123e4567-e89b-12d3-a456-426614174000"])
+    status: VolunteerStatus = Field(VolunteerStatus.PENDING, description="Current onboarding status of the volunteer")
     performance_score: float = Field(..., description="Calculated performance score based on past tasks", examples=[4.8])
     total_tasks_done: int = Field(..., description="Total number of tasks successfully completed", examples=[5])
     created_at: datetime = Field(..., description="Timestamp of when the volunteer registered")
