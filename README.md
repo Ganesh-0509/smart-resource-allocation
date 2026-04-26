@@ -1,4 +1,4 @@
-# <p align="center"><img src="frontend/public/logo.png" width="120" alt="Namma Connect Logo" /><br/>Namma Connect</p>
+# <p align="center"><img src="frontend/public/banner.png" width="600" alt="Namma Connect Banner" /></p>
 
 <p align="center">
   <b>Data-Driven Volunteer Coordination System for Hyper-Local Community Impact.</b><br/>
