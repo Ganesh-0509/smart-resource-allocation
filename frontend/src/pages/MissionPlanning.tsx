@@ -223,7 +223,7 @@ export default function MissionPlanning() {
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                  {/* Deployment Suggestions */}
-                 <section className={`rounded-3xl bg-[#FAF8F3] p-8 border border-slate-100 shadow-inner ${showAuditHistory ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
+                 <section className={`rounded-3xl bg-white/60 p-8 border border-slate-100 shadow-inner ${showAuditHistory ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
                     <h3 className="text-sm font-black text-[#1A3C2E] uppercase tracking-widest mb-6">Deployment Suggestions</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                        {matches.length === 0 && (

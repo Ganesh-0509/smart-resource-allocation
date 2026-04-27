@@ -3,7 +3,7 @@
 :root {
   --saffron: #E8712A;
   --saffron-light: #F5A26F;
-  --saffron-pale: #FEF0E6;
+  --saffron-pale: #FFF9F5;
   --forest: #1A3C2E;
   --forest-mid: #2D5E47;
   --forest-light: #4A8C6A;
@@ -24,7 +24,7 @@ body,
 body {
   margin: 0;
   font-family: 'DM Sans', sans-serif;
-  background-color: var(--cream);
+  background-color: var(--saffron-pale);
   color: var(--charcoal);
   overflow-x: hidden;
 }

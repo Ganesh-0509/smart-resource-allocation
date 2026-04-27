@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.db.supabase_client import test_connection
 from app.routes import analytics, assignments, audit, auth, batch_matching, intake, ocr, scheduling, tasks, volunteers
+from app.routes import admin
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,7 @@ app.include_router(analytics.router)
 app.include_router(audit.router)
 app.include_router(batch_matching.router)
 app.include_router(ocr.router)
+app.include_router(admin.router)
 
 @app.get("/")
 def health():

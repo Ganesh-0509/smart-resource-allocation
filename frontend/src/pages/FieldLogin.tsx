@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const FieldLogin: React.FC = () => {
   const [phone, setPhone] = useState('');
@@ -16,7 +16,7 @@ const FieldLogin: React.FC = () => {
     // Simulate login for now
     setTimeout(() => {
       localStorage.setItem('access_token', 'fake-field-token');
-      // TODO: Replace with real backend authentication and role validation
+      localStorage.setItem('role', 'field');
       navigate('/field/report');
       setLoading(false);
     }, 800);
@@ -49,6 +49,7 @@ const FieldLogin: React.FC = () => {
             <input
               type="tel"
               value={phone}
+              autoComplete="tel"
               onChange={(e) => setPhone(e.target.value)}
               className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-[#1A3C2E] focus:outline-none transition-all"
               placeholder="+91 XXXXX XXXXX"
@@ -62,6 +63,7 @@ const FieldLogin: React.FC = () => {
               type="password"
               maxLength={6}
               value={pin}
+              autoComplete="current-password"
               onChange={(e) => setPin(e.target.value)}
               className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-[#1A3C2E] focus:outline-none transition-all tracking-[0.5em] font-mono text-center text-2xl"
               placeholder="••••••"
@@ -78,10 +80,16 @@ const FieldLogin: React.FC = () => {
           </button>
         </form>
 
-        <div className="mt-8 text-center">
+        <div className="mt-8 text-center space-y-4">
             <p className="text-xs text-slate-400 font-medium italic">
                 Authorized field workers only. Contact your coordinator for PIN reset.
             </p>
+            <div className="pt-4 border-t border-slate-50">
+                <p className="text-sm text-slate-500">
+                    Want to join an NGO as a field worker?{' '}
+                    <Link to="/field/register" className="text-[#E8712A] font-bold hover:underline">Register here</Link>
+                </p>
+            </div>
         </div>
       </div>
     </div>

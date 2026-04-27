@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { notify } from '../utils/notify';
 
 const VolunteerLogin: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -12,11 +13,14 @@ const VolunteerLogin: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    const toastId = notify.loading('Signing you in...');
     
     // Simulate login for now as per requirements (no backend logic yet)
     setTimeout(() => {
       localStorage.setItem('access_token', 'fake-volunteer-token');
-      // TODO: Replace with real backend authentication and role validation
+      localStorage.setItem('role', 'volunteer');
+      notify.dismiss(toastId);
+      notify.success('Logged in successfully!');
       navigate('/volunteer/dashboard');
       setLoading(false);
     }, 800);
@@ -49,6 +53,7 @@ const VolunteerLogin: React.FC = () => {
             <input
               type="email"
               value={email}
+              autoComplete="username"
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-[#1A3C2E] focus:outline-none transition-all"
               placeholder="volunteer@example.org"
@@ -61,6 +66,7 @@ const VolunteerLogin: React.FC = () => {
             <input
               type="password"
               value={password}
+              autoComplete="current-password"
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-[#1A3C2E] focus:outline-none transition-all"
               placeholder="••••••••"

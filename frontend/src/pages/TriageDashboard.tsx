@@ -71,7 +71,7 @@ export default function TriageDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-[#F9F7F2] p-8 font-inter">
+    <div className="min-h-screen bg-[var(--saffron-pale)] p-8 font-inter">
       <Toaster position="top-right" />
       <div className="max-w-7xl mx-auto">
         <header className="mb-10">

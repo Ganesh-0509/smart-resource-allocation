@@ -14,6 +14,7 @@ from app.models.volunteer import (
     VolunteerResponse,
     VolunteerAvailabilityUpdate,
 )
+from app.utils.errors import handle_db_error
 from app.utils.audit import log_audit, AuditActions
 
 logger = logging.getLogger(__name__)
@@ -143,7 +144,7 @@ async def register_volunteer(volunteer: VolunteerCreate, background_tasks: Backg
             
         return new_vol
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Database error: {str(e)}")
+        handle_db_error(e)
 
 
 @router.get("/", response_model=List[VolunteerResponse])
@@ -170,7 +171,7 @@ async def list_volunteers(
         response = query.execute()
         return response.data
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Database error: {str(e)}")
+        handle_db_error(e)
 
 
 @router.get("/{id}", response_model=VolunteerResponse)
@@ -190,7 +191,7 @@ async def get_volunteer(id: UUID, user: UserContext = Depends(require_role(["ngo
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Database error: {str(e)}")
+        handle_db_error(e)
 
 
 @router.patch("/{id}/availability", response_model=VolunteerResponse)
@@ -232,7 +233,7 @@ async def update_availability(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Database error: {str(e)}")
+        handle_db_error(e)
 
 
 @router.get("/{id}/tasks")
@@ -250,7 +251,7 @@ async def get_volunteer_tasks(id: UUID, user: UserContext = Depends(require_role
         )
         return response.data
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Database error: {str(e)}")
+        handle_db_error(e)
 
 
 @router.delete("/{id}", response_model=VolunteerResponse)
@@ -285,7 +286,7 @@ async def delete_volunteer(id: UUID, background_tasks: BackgroundTasks, user: Us
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Database error: {str(e)}")
+        handle_db_error(e)
 
 
 @router.patch("/{id}/approve", response_model=VolunteerResponse)
@@ -339,4 +340,4 @@ async def _update_volunteer_status(id: UUID, status: str, ngo_id: str, action: s
         
         return updated_vol
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        handle_db_error(e)

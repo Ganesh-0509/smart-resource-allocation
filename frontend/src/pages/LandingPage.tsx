@@ -176,6 +176,7 @@ export default function LandingPage() {
         .stat-desc { font-size: 14px; color: rgba(255,255,255,0.4); font-weight: 500; letter-spacing: 0.02em; }
 
         /* ─── FEATURES ─── */
+        .features-section { background: white; }
         .features {
           padding: 140px 48px;
           max-width: 1280px; margin: 0 auto;
@@ -200,7 +201,7 @@ export default function LandingPage() {
         }
 
         .feature-card {
-          background: white; border-radius: 32px;
+          background: rgba(255, 255, 255, 0.7); border-radius: 32px;
           border: 1px solid var(--border);
           padding: 40px;
           transition: all .4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -243,7 +244,7 @@ export default function LandingPage() {
         }
 
         /* ─── HOW IT WORKS ─── */
-        .how { background: white; padding: 140px 48px; }
+        .how { background: var(--saffron-pale); padding: 140px 48px; }
         .how-inner { max-width: 1280px; margin: 0 auto; }
         .steps {
           display: grid; grid-template-columns: repeat(4, 1fr);
@@ -273,6 +274,7 @@ export default function LandingPage() {
         .step-desc { font-size: 14px; color: var(--slate); line-height: 1.7; font-weight: 500; }
 
         /* ─── IMPACT ─── */
+        .impact-section { background: white; }
         .impact {
           padding: 140px 48px;
           max-width: 1280px; margin: 0 auto;
@@ -426,13 +428,15 @@ export default function LandingPage() {
           <img src={logo} alt="Namma Connect Logo" />
           <span>Namma Connect</span>
         </div>
-        <div className="nav-actions">
-          <button onClick={() => navigate("/login")} className="btn-secondary" style={{ padding: '10px 24px', fontSize: '14px' }}>Login</button>
+        <div className="nav-actions" style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <button onClick={() => navigate("/admin/login")} style={{ background: "none", border: "none", fontSize: "13px", color: "var(--slate)", cursor: "pointer", fontWeight: 600, opacity: 0.5 }}>Admin</button>
+          <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--forest)", cursor: "pointer" }} onClick={() => navigate("/volunteer/register")}>Join as Volunteer</span>
+          <button onClick={() => navigate("/ngo/login")} className="btn-secondary" style={{ padding: '10px 24px', fontSize: '14px' }}>NGO Login</button>
         </div>
       </nav>
 
       {/* HERO */}
-      <section style={{ background: "var(--warm-white)", paddingTop: '80px' }}>
+      <section style={{ background: "var(--saffron-pale)", paddingTop: '80px' }}>
         <div className="hero">
           <div className="hero-left">
             <div className="hero-eyebrow">
@@ -448,7 +452,7 @@ export default function LandingPage() {
               AI-powered volunteer matching, OCR survey digitization, and real-time need tracking — built for NGOs operating across India.
             </p>
             <div className="hero-actions">
-              <button onClick={() => navigate("/login")} className="btn-primary">
+              <button onClick={() => navigate("/ngo/login")} className="btn-primary">
                 Enter Dashboard
                 <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
               </button>
@@ -546,9 +550,10 @@ export default function LandingPage() {
       </div>
 
       {/* FEATURES */}
-      <section id="features" className="features">
-        <div className="section-eyebrow">What we built</div>
-        <div className="section-title">Every tool an NGO coordinator actually needs.</div>
+      <section id="features" className="features-section">
+        <div className="features">
+          <div className="section-eyebrow">What we built</div>
+          <div className="section-title">Every tool an NGO coordinator actually needs.</div>
         <div className="features-grid">
 
           <div className="feature-card wide accent">
@@ -593,6 +598,7 @@ export default function LandingPage() {
             <div className="feature-tag" style={{ background: "rgba(255,255,255,0.15)", color: "white" }}>GPS · Field execution</div>
           </div>
 
+          </div>
         </div>
       </section>
 
@@ -627,9 +633,10 @@ export default function LandingPage() {
       </section>
 
       {/* IMPACT */}
-      <section id="impact" className="impact">
-        <div className="section-eyebrow">Real-world impact</div>
-        <div className="section-title">Built for India's scale.</div>
+      <section id="impact" className="impact-section">
+        <div className="impact">
+          <div className="section-eyebrow">Real-world impact</div>
+          <div className="section-title">Built for India's scale.</div>
         <div className="impact-grid">
           <div className="impact-card">
             <div className="impact-number">8<span className="impact-unit">x</span></div>
@@ -648,6 +655,7 @@ export default function LandingPage() {
               <div className="quote-author">— Impact projection, Madurai district pilot</div>
             </div>
           </div>
+          </div>
         </div>
       </section>
 
@@ -659,8 +667,8 @@ export default function LandingPage() {
             <p>Join NGOs across India using Namma Connect to turn community needs into coordinated action — faster and smarter than ever before.</p>
           </div>
           <div className="cta-actions">
-            <button onClick={() => navigate("/login")} className="btn-cta-primary">Enter Dashboard →</button>
-            <button onClick={() => navigate("/login")} className="btn-cta-secondary">Request a Demo</button>
+            <button onClick={() => navigate("/ngo/login")} className="btn-cta-primary">NGO Portal →</button>
+            <button onClick={() => navigate("/volunteer/register")} className="btn-cta-secondary">Join as Volunteer</button>
           </div>
         </div>
       </div>

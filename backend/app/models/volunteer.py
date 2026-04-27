@@ -23,13 +23,22 @@ class Skill(str, Enum):
 
 class VolunteerCreate(BaseModel):
     name: str = Field(..., description="Full name of the volunteer", examples=["Ravi Kumar"])
+    email: str = Field(..., description="Email address for login and notifications")
     phone: Optional[str] = Field(None, description="Contact phone number", examples=["+919876543210"])
+    gender: Optional[str] = Field(None, description="Gender of the volunteer")
+    dob: Optional[str] = Field(None, description="Date of birth")
+    blood_group: Optional[str] = Field(None, description="Blood group")
     skills: List[Skill] = Field(..., description="List of skills the volunteer possesses", examples=[["logistics", "education"]])
     lat: float = Field(..., description="Latitude of the volunteer's exact or approximate location", examples=[28.6139])
     lng: float = Field(..., description="Longitude of the volunteer's exact or approximate location", examples=[77.2090])
     availability: bool = Field(True, description="Whether the volunteer is currently available to take on tasks", examples=[True])
     ward: Optional[str] = Field(None, description="The ward where the volunteer resides", examples=["Ward 12"])
     district: str = Field(..., description="The district where the volunteer resides", examples=["Madurai"])
+    address: Optional[str] = Field(None, description="Residential address")
+    emergency_contact_name: Optional[str] = Field(None, description="Name of emergency contact")
+    emergency_contact_phone: Optional[str] = Field(None, description="Phone of emergency contact")
+    id_proof_type: Optional[str] = Field(None, description="Type of ID proof (Aadhar, etc.)")
+    id_proof_number: Optional[str] = Field(None, description="ID proof number")
     ngo_id: UUID = Field(..., description="The NGO this volunteer is registering for")
 
 class VolunteerUpdate(BaseModel):

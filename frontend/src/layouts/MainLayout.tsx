@@ -67,7 +67,7 @@ export default function MainLayout() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F9F7F2]">
+    <div className="flex min-h-screen bg-[var(--saffron-pale)]">
       {/* Sidebar */}
       <aside className="w-64 bg-[#1A3C2E] text-white flex flex-col fixed inset-y-0 shadow-xl z-20">
         <div className="p-6 flex items-center gap-3 border-b border-white/5 mb-4">

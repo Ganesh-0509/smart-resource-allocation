@@ -22,12 +22,22 @@ export type VolunteerStatus = "pending" | "approved" | "active" | "inactive" | "
 
 export interface VolunteerCreate {
   name: string;
+  email: string;
+  ngo_id: string;
   phone?: string | null;
+  gender?: string;
+  dob?: string;
+  blood_group?: string;
   skills: VolunteerSkill[];
   ward: string;
   district: string;
+  address?: string;
   lat: number;
   lng: number;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
+  id_proof_type?: string;
+  id_proof_number?: string;
   availability?: boolean;
 }
 
@@ -36,6 +46,18 @@ export interface Volunteer extends VolunteerCreate {
   status: VolunteerStatus;
   performance_score: number;
   total_tasks_done: number;
+  created_at: string;
+}
+
+export interface FieldWorker {
+  id: string;
+  ngo_id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  designation?: string;
+  base_location?: string;
+  status: "active" | "inactive" | "suspended";
   created_at: string;
 }
 

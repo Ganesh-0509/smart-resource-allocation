@@ -1,5 +1,6 @@
 import axios, { AxiosError } from "axios";
 import type { AxiosInstance, InternalAxiosRequestConfig } from "axios";
+import { notify } from "../utils/notify";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -17,7 +18,7 @@ const api: AxiosInstance = axios.create({
 // Request Interceptor: Attach Auth Token
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("access_token");
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -25,7 +26,6 @@ api.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
-
 // Response Interceptor: Centralized Error Handling
 api.interceptors.response.use(
   (response) => response,
@@ -33,19 +33,27 @@ api.interceptors.response.use(
     const status = error.response?.status;
 
     if (status === 401) {
-      // Unauthorized: Clear token and redirect to login
-      localStorage.removeItem("token");
+      // Unauthorized: Clear token and redirect to appropriate login
+      localStorage.removeItem("access_token");
       localStorage.removeItem("role");
       localStorage.removeItem("ngo_id");
-      if (!window.location.pathname.includes("/login")) {
-         window.location.href = "/";
+      localStorage.removeItem("admin_id");
+      const path = window.location.pathname;
+      // Don't redirect if already on a login page
+      if (!path.includes("/login")) {
+        // Send admin users back to admin login, others to landing
+        if (path.startsWith("/admin")) {
+          window.location.href = "/admin/login";
+        } else {
+          window.location.href = "/";
+        }
       }
     } else if (status === 403) {
-      // Forbidden: Access Denied
-      console.error("Access Denied: You do not have permission to perform this action.");
+      notify.error("Access Denied: You do not have permission to perform this action.");
+    } else if (status === 429) {
+      notify.error("Slow down: Too many requests. Please try again later.");
     } else if (status && status >= 500) {
-      // Server Error
-      console.error("System Error: Please try again later.");
+      notify.error("System Error: Please try again later.");
     }
 
     return Promise.reject(parseApiError(error));

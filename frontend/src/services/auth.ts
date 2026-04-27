@@ -5,7 +5,21 @@ export async function loginNGO(email: string, password: string) {
   return response.data;
 }
 
-export async function registerNGO(name: string, email: string, password: string) {
-  const response = await api.post("/api/auth/register", { name, email, password });
+export interface NGORegisterPayload {
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+  registration_number: string;
+  org_type: string;
+  district: string;
+  state: string;
+  address: string;
+  description: string;
+  website?: string;
+}
+
+export async function registerNGO(payload: NGORegisterPayload) {
+  const response = await api.post("/api/auth/register", payload);
   return response.data;
 }

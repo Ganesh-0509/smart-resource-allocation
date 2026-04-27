@@ -17,6 +17,7 @@ from app.services.notifier import (
 )
 from app.services.geocoder import ensure_coordinates
 from app.services.escalator import check_and_escalate_tasks, reassign_task
+from app.utils.errors import handle_db_error
 from app.utils.audit import log_audit, AuditActions
 
 logger = logging.getLogger(__name__)
@@ -527,8 +528,7 @@ async def get_dashboard_stats(user: UserContext = Depends(require_ngo)):
             "active_volunteers": active_volunteers
         }
     except Exception as e:
-        logger.error(f"Error fetching stats: {e}")
-        raise HTTPException(status_code=400, detail=f"Database error: {str(e)}")
+        handle_db_error(e)
 
 
 @router.get("/api/dashboard/activity", response_model=List[dict], tags=["dashboard"])

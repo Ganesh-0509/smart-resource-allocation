@@ -6,12 +6,16 @@ import NGOLogin from "../pages/NGOLogin";
 import VolunteerLogin from "../pages/VolunteerLogin";
 import FieldLogin from "../pages/FieldLogin";
 import NGORegister from "../pages/NGORegister";
+import VolunteerRegister from "../pages/VolunteerRegister";
+import FieldWorkerRegister from "../pages/FieldWorkerRegister";
 import DashboardOverview from "../pages/DashboardOverview";
 import TriageDashboard from "../pages/TriageDashboard";
 import MissionPlanning from "../pages/MissionPlanning";
 import VolunteerManagement from "../pages/VolunteerManagement";
 import VolunteerDashboard from "../pages/VolunteerDashboard";
 import SurveyUpload from "../pages/SurveyUpload";
+import AdminLogin from "../pages/AdminLogin";
+import AdminConsole from "../pages/AdminConsole";
 
 export default function AppRoutes() {
   return (
@@ -23,6 +27,10 @@ export default function AppRoutes() {
       <Route path="/volunteer/login" element={<VolunteerLogin />} />
       <Route path="/field/login" element={<FieldLogin />} />
       <Route path="/ngo/register" element={<NGORegister />} />
+      <Route path="/volunteer/register" element={<VolunteerRegister />} />
+      <Route path="/field/register" element={<FieldWorkerRegister />} />
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin/console" element={<AdminConsole />} />
 
       {/* Main App Routes with Sidebar */}
       <Route element={<MainLayout />}>
