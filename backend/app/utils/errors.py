@@ -9,6 +9,7 @@ ERROR_CODES = {
     "23503": "This operation cannot be completed because a related record is missing.",
     "42703": "Database configuration error. Please contact support.",
     "23502": "A required field is missing.",
+    "PGRST116": "Account profile not found. Please ensure you are logging in with the correct account type (NGO/Volunteer).",
 }
 
 # Specific Constraint Mapping (Optional but nice)

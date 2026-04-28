@@ -57,11 +57,11 @@ async def create_scheduling_slot(slot: SchedulingSlotCreate, user: UserContext =
         # Security: check volunteer belongs to NGO or is the same user
         vol_id = str(slot.volunteer_id)
         
-        vol_check = supabase.table("volunteers").select("id, ngo_id").eq("id", vol_id).single().execute()
-        if not vol_check.data:
+        vol_check = supabase.table("volunteers").select("id, ngo_id").eq("id", vol_id).execute()
+        if not vol_check.data or len(vol_check.data) == 0:
             raise HTTPException(status_code=404, detail="Volunteer not found")
         
-        volunteer = vol_check.data
+        volunteer = vol_check.data[0]
         if user.role == "volunteer" and vol_id != user.user_id:
             raise HTTPException(status_code=403, detail="Forbidden: You can only manage your own schedule")
         if user.role == "ngo" and volunteer["ngo_id"] != user.ngo_id:
@@ -164,16 +164,16 @@ async def update_scheduling_slot(slot_id: UUID, updates: SchedulingSlotUpdate, u
     """Update a scheduling slot. Secure ownership check."""
     try:
         # Check ownership
-        slot_res = supabase.table("scheduling_slots").select("volunteer_id").eq("id", str(slot_id)).single().execute()
-        if not slot_res.data:
+        slot_res = supabase.table("scheduling_slots").select("volunteer_id").eq("id", str(slot_id)).execute()
+        if not slot_res.data or len(slot_res.data) == 0:
             raise HTTPException(status_code=404, detail="Slot not found")
         
-        vol_id = slot_res.data["volunteer_id"]
-        vol_check = supabase.table("volunteers").select("ngo_id").eq("id", vol_id).single().execute()
+        vol_id = slot_res.data[0]["volunteer_id"]
+        vol_check = supabase.table("volunteers").select("ngo_id").eq("id", vol_id).execute()
         
         if user.role == "volunteer" and vol_id != user.user_id:
              raise HTTPException(status_code=403, detail="Forbidden: Not your slot")
-        if user.role == "ngo" and vol_check.data["ngo_id"] != user.ngo_id:
+        if user.role == "ngo" and vol_check.data[0]["ngo_id"] != user.ngo_id:
              raise HTTPException(status_code=403, detail="Forbidden: Not in your NGO")
 
         update_payload = updates.model_dump(exclude_none=True)
@@ -211,16 +211,16 @@ async def delete_scheduling_slot(slot_id: UUID, user: UserContext = Depends(requ
     """Delete a scheduling slot. Secure ownership check."""
     try:
         # Check ownership
-        slot_res = supabase.table("scheduling_slots").select("volunteer_id").eq("id", str(slot_id)).single().execute()
-        if not slot_res.data:
+        slot_res = supabase.table("scheduling_slots").select("volunteer_id").eq("id", str(slot_id)).execute()
+        if not slot_res.data or len(slot_res.data) == 0:
             raise HTTPException(status_code=404, detail="Slot not found")
         
-        vol_id = slot_res.data["volunteer_id"]
-        vol_check = supabase.table("volunteers").select("ngo_id").eq("id", vol_id).single().execute()
+        vol_id = slot_res.data[0]["volunteer_id"]
+        vol_check = supabase.table("volunteers").select("ngo_id").eq("id", vol_id).execute()
         
         if user.role == "volunteer" and vol_id != user.user_id:
              raise HTTPException(status_code=403, detail="Forbidden: Not your slot")
-        if user.role == "ngo" and vol_check.data["ngo_id"] != user.ngo_id:
+        if user.role == "ngo" and vol_check.data[0]["ngo_id"] != user.ngo_id:
              raise HTTPException(status_code=403, detail="Forbidden: Not in your NGO")
 
         supabase.table("scheduling_slots").delete().eq("id", str(slot_id)).execute()

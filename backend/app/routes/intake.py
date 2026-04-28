@@ -131,13 +131,14 @@ async def get_report_duplicates(
     """
     try:
         # Check if this report itself is marked as a duplicate
-        report_res = supabase.table("intake_reports").select("possible_duplicate_of").eq("id", str(id)).eq("ngo_id", user.ngo_id).single().execute()
-        if not report_res.data:
+        report_res = supabase.table("intake_reports").select("possible_duplicate_of").eq("id", str(id)).eq("ngo_id", user.ngo_id).execute()
+        if not report_res.data or len(report_res.data) == 0:
             raise HTTPException(status_code=404, detail="Report not found in your NGO")
         
+        report_data = report_res.data[0]
         ids_to_fetch = []
-        if report_res.data.get("possible_duplicate_of"):
-            ids_to_fetch.append(report_res.data["possible_duplicate_of"])
+        if report_data.get("possible_duplicate_of"):
+            ids_to_fetch.append(report_data["possible_duplicate_of"])
             
         # Also find any reports that point to THIS report as a duplicate
         others_res = supabase.table("intake_reports").select("id").eq("possible_duplicate_of", str(id)).execute()
@@ -223,11 +224,11 @@ async def convert_to_task(
     try:
         ngo_id = user.ngo_id
         # 1. Fetch report and verify status
-        report_res = supabase.table("intake_reports").select("*").eq("id", str(id)).eq("ngo_id", ngo_id).single().execute()
-        if not report_res.data:
+        report_res = supabase.table("intake_reports").select("*").eq("id", str(id)).eq("ngo_id", ngo_id).execute()
+        if not report_res.data or len(report_res.data) == 0:
             raise HTTPException(status_code=404, detail="Intake report not found")
             
-        report = report_res.data
+        report = report_res.data[0]
         if report["status"] != IntakeStatus.APPROVED.value:
             raise HTTPException(status_code=400, detail="Only approved reports can be converted to tasks")
         

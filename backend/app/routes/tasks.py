@@ -475,8 +475,8 @@ async def trigger_manual_reassign(id: UUID, background_tasks: BackgroundTasks, u
         await reassign_task(str(id), user.ngo_id)
         
         # Audit Log
-        task_res = supabase.table("tasks").select("title").eq("id", str(id)).eq("ngo_id", user.ngo_id).single().execute()
-        if not task_res.data:
+        task_res = supabase.table("tasks").select("title").eq("id", str(id)).eq("ngo_id", user.ngo_id).execute()
+        if not task_res.data or len(task_res.data) == 0:
              raise HTTPException(status_code=404, detail="Task not found in your NGO")
 
         background_tasks.add_task(

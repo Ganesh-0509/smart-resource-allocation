@@ -100,12 +100,16 @@ def login_ngo(req: LoginRequest):
         user_id = auth_response.user.id
         
         # Fetch NGO details from database
-        ngo_response = supabase.table("ngos").select("name, status").eq("id", user_id).single().execute()
+        ngo_response = supabase.table("ngos").select("name, status").eq("id", user_id).execute()
         
-        if not ngo_response.data:
-            raise HTTPException(status_code=404, detail="NGO profile not found in database")
+        if not ngo_response or not ngo_response.data or len(ngo_response.data) == 0:
+            # If not in NGO table, it might be a volunteer or admin trying to log in here
+            raise HTTPException(
+                status_code=403, 
+                detail="NGO profile not found. If you are a volunteer, please use the volunteer login page."
+            )
         
-        ngo = ngo_response.data
+        ngo = ngo_response.data[0]
         
         # Block unapproved NGOs
         if ngo.get("status") == "pending":

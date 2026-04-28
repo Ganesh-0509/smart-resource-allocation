@@ -195,10 +195,12 @@ async def accept_assignment(assignment_id: UUID, background_tasks: BackgroundTas
     """Accept an assignment. Only for assigned volunteer."""
     try:
         # Check if user is the assigned volunteer
-        check = supabase.table("assignments").select("volunteer_id, task_id, ngo_id").eq("id", str(assignment_id)).single().execute()
-        if not check.data:
+        check = supabase.table("assignments").select("volunteer_id, task_id, ngo_id").eq("id", str(assignment_id)).execute()
+        if not check.data or len(check.data) == 0:
             raise HTTPException(status_code=404, detail="Assignment not found")
-        if check.data["volunteer_id"] != user.user_id:
+        
+        assignment_data = check.data[0]
+        if assignment_data["volunteer_id"] != user.user_id:
              raise HTTPException(status_code=403, detail="Forbidden: This is not your assignment")
 
         now = datetime.now(timezone.utc).isoformat()
@@ -214,12 +216,12 @@ async def accept_assignment(assignment_id: UUID, background_tasks: BackgroundTas
         assignment = response.data[0]
         
         # Fetch task title and volunteer name for better log
-        task_res = supabase.table("tasks").select("title, ngo_id").eq("id", assignment["task_id"]).single().execute()
-        vol_res = supabase.table("volunteers").select("name").eq("id", assignment["volunteer_id"]).single().execute()
+        task_res = supabase.table("tasks").select("title, ngo_id").eq("id", assignment["task_id"]).execute()
+        vol_res = supabase.table("volunteers").select("name").eq("id", assignment["volunteer_id"]).execute()
         
-        task_title = task_res.data["title"] if task_res.data else "Task"
-        ngo_id = task_res.data["ngo_id"] if task_res.data else None
-        vol_name = vol_res.data["name"] if vol_res.data else "Volunteer"
+        task_title = task_res.data[0]["title"] if task_res.data and len(task_res.data) > 0 else "Task"
+        ngo_id = task_res.data[0]["ngo_id"] if task_res.data and len(task_res.data) > 0 else None
+        vol_name = vol_res.data[0]["name"] if vol_res.data and len(vol_res.data) > 0 else "Volunteer"
 
         _log_activity("assignment_accepted", user.user_id, assignment["task_id"], f"Assignment {assignment_id} accepted")
         
@@ -248,10 +250,10 @@ async def decline_assignment(assignment_id: UUID, request: AssignmentDeclineRequ
     """Decline an assignment. Only for assigned volunteer."""
     try:
         # Check if user is the assigned volunteer
-        check = supabase.table("assignments").select("volunteer_id, task_id").eq("id", str(assignment_id)).single().execute()
-        if not check.data:
+        check = supabase.table("assignments").select("volunteer_id, task_id").eq("id", str(assignment_id)).execute()
+        if not check.data or len(check.data) == 0:
             raise HTTPException(status_code=404, detail="Assignment not found")
-        if check.data["volunteer_id"] != user.user_id:
+        if check.data[0]["volunteer_id"] != user.user_id:
              raise HTTPException(status_code=403, detail="Forbidden: This is not your assignment")
 
         response = supabase.table("assignments").update({
@@ -275,8 +277,8 @@ async def reassign_assignment(assignment_id: UUID, request: AssignmentReassignRe
     """Reassign an assignment to a new volunteer. Restricted to NGO."""
     try:
         # Check NGO ownership
-        check = supabase.table("assignments").select("ngo_id, task_id").eq("id", str(assignment_id)).single().execute()
-        if not check.data or check.data["ngo_id"] != user.ngo_id:
+        check = supabase.table("assignments").select("ngo_id, task_id").eq("id", str(assignment_id)).execute()
+        if not check.data or len(check.data) == 0 or check.data[0]["ngo_id"] != user.ngo_id:
              raise HTTPException(status_code=403, detail="Forbidden: Assignment not in your NGO")
 
         response = supabase.table("assignments").update({
@@ -292,13 +294,13 @@ async def reassign_assignment(assignment_id: UUID, request: AssignmentReassignRe
         _log_activity("assignment_reassigned", user.user_id, assignment["task_id"], f"Assignment {assignment_id} reassigned by NGO {user.user_id}")
         
         # Audit Log
-        task_res = supabase.table("tasks").select("title").eq("id", assignment["task_id"]).single().execute()
+        task_res = supabase.table("tasks").select("title").eq("id", assignment["task_id"]).execute()
         background_tasks.add_task(
             log_audit,
             action_type=AuditActions.TASK_REASSIGNED,
             entity_type="assignment",
             entity_id=str(assignment_id),
-            description=f"Task '{task_res.data['title'] if task_res.data else assignment['task_id']}' reassigned by NGO. Reason: {reason}",
+            description=f"Task '{task_res.data[0]['title'] if (task_res.data and len(task_res.data) > 0) else assignment['task_id']}' reassigned by NGO. Reason: {reason}",
             ngo_id=user.ngo_id,
             user_id=user.user_id,
             user_role=user.role
@@ -317,8 +319,8 @@ async def escalate_assignment(assignment_id: UUID, request: AssignmentEscalateRe
     """Escalate an assignment. Restricted to NGO."""
     try:
         # Check NGO ownership
-        check = supabase.table("assignments").select("ngo_id, task_id").eq("id", str(assignment_id)).single().execute()
-        if not check.data or check.data["ngo_id"] != user.ngo_id:
+        check = supabase.table("assignments").select("ngo_id, task_id").eq("id", str(assignment_id)).execute()
+        if not check.data or len(check.data) == 0 or check.data[0]["ngo_id"] != user.ngo_id:
              raise HTTPException(status_code=403, detail="Forbidden: Assignment not in your NGO")
 
         response = supabase.table("assignments").update({
@@ -336,7 +338,7 @@ async def escalate_assignment(assignment_id: UUID, request: AssignmentEscalateRe
         _log_activity("assignment_escalated", user.user_id, assignment["task_id"], f"Assignment {assignment_id} escalated by NGO {user.user_id}")
         
         # Audit Log
-        task_res = supabase.table("tasks").select("title").eq("id", assignment["task_id"]).single().execute()
+        task_res = supabase.table("tasks").select("title").eq("id", assignment["task_id"]).execute()
         background_tasks.add_task(
             log_audit,
             action_type=AuditActions.ESCALATION_TRIGGERED,
@@ -361,8 +363,8 @@ async def check_in_assignment(assignment_id: UUID, request: AssignmentCheckInReq
     """Check in to an assignment. Only for assigned volunteer."""
     try:
         # Check ownership
-        check = supabase.table("assignments").select("volunteer_id, task_id").eq("id", str(assignment_id)).single().execute()
-        if not check.data or check.data["volunteer_id"] != user.user_id:
+        check = supabase.table("assignments").select("volunteer_id, task_id").eq("id", str(assignment_id)).execute()
+        if not check.data or len(check.data) == 0 or check.data[0]["volunteer_id"] != user.user_id:
              raise HTTPException(status_code=403, detail="Forbidden: You can only check-in to your own assignments")
 
         response = supabase.table("assignments").update({
@@ -389,8 +391,8 @@ async def check_out_assignment(assignment_id: UUID, request: AssignmentCheckOutR
     """Check out and complete assignment. Only for assigned volunteer."""
     try:
         # Check ownership
-        check = supabase.table("assignments").select("volunteer_id, task_id, ngo_id").eq("id", str(assignment_id)).single().execute()
-        if not check.data or check.data["volunteer_id"] != user.user_id:
+        check = supabase.table("assignments").select("volunteer_id, task_id, ngo_id").eq("id", str(assignment_id)).execute()
+        if not check.data or len(check.data) == 0 or check.data[0]["volunteer_id"] != user.user_id:
              raise HTTPException(status_code=403, detail="Forbidden: You can only check-out from your own assignments")
 
         now = datetime.now(timezone.utc).isoformat()
@@ -413,15 +415,15 @@ async def check_out_assignment(assignment_id: UUID, request: AssignmentCheckOutR
         _log_activity("assignment_check_out", user.user_id, assignment["task_id"], f"Volunteer checked out at {request.lat}, {request.lng}")
         
         # Audit Log
-        task_res = supabase.table("tasks").select("title").eq("id", assignment["task_id"]).single().execute()
-        vol_res = supabase.table("volunteers").select("name").eq("id", user.user_id).single().execute()
+        task_res = supabase.table("tasks").select("title").eq("id", assignment["task_id"]).execute()
+        vol_res = supabase.table("volunteers").select("name").eq("id", user.user_id).execute()
         background_tasks.add_task(
             log_audit,
             action_type=AuditActions.TASK_COMPLETED,
             entity_type="assignment",
             entity_id=str(assignment_id),
-            description=f"Task '{task_res.data['title'] if task_res.data else assignment['task_id']}' completed by volunteer {vol_res.data['name'] if vol_res.data else user.user_id}",
-            ngo_id=check.data["ngo_id"],
+            description=f"Task '{task_res.data[0]['title'] if (task_res.data and len(task_res.data) > 0) else assignment['task_id']}' completed by volunteer {vol_res.data[0]['name'] if (vol_res.data and len(vol_res.data) > 0) else user.user_id}",
+            ngo_id=check.data[0]["ngo_id"],
             user_id=user.user_id,
             user_role=user.role
         )
