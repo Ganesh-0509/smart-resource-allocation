@@ -1,6 +1,26 @@
-# Namma Connect Deployment Guide
+## Google Cloud Platform (GCP) Deployment (Recommended)
 
-## Backend deployment on Render (6 steps)
+### Backend on Google Cloud Run
+1. Ensure `backend/Dockerfile` and `cloudbuild.yaml` are in your repository.
+2. Enable the **Cloud Run**, **Cloud Build**, and **Artifact Registry** APIs in your GCP Console.
+3. Run the following command from your local terminal (ensure `gcloud` is installed):
+   ```bash
+   gcloud builds submit --config cloudbuild.yaml --substitutions _SUPABASE_URL="your_url",_SUPABASE_KEY="your_key",_GEMINI_API_KEY="your_key"
+   ```
+4. Once deployed, note the Service URL (e.g., `https://backend-xyz.a.run.app`).
+
+### Frontend on Firebase Hosting
+1. Install Firebase CLI: `npm install -g firebase-tools`
+2. Run `firebase init hosting` in the `frontend` directory.
+   - Choose your GCP project.
+   - Set public directory to `dist`.
+   - Configure as a single-page app: `Yes`.
+3. Build the frontend: `npm run build` (ensure `VITE_API_URL` is set to your Cloud Run URL).
+4. Deploy: `firebase deploy --only hosting`
+
+---
+
+## Backend deployment on Render (Legacy)
 
 1. Push your latest code to GitHub and make sure the root contains render.yaml.
 2. In Render, choose New + Blueprint and connect your repository.
