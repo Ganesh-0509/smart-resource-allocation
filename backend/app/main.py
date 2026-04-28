@@ -43,6 +43,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+
 app.include_router(auth.router)
 app.include_router(intake.router)
 app.include_router(volunteers.router)
@@ -55,9 +59,19 @@ app.include_router(batch_matching.router)
 app.include_router(ocr.router)
 app.include_router(admin.router)
 
-@app.get("/")
-def health():
-    return {"status": "ok", "version": "1.0"}
+# Serve static files from the 'static' directory
+static_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static")
+if os.path.exists(static_path):
+    app.mount("/assets", StaticFiles(directory=os.path.join(static_path, "assets")), name="static")
+
+@app.get("/{full_path:path}")
+async def serve_frontend(full_path: str):
+    # API routes are handled by routers above.
+    # Everything else serves the index.html
+    index_file = os.path.join(static_path, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
+    return {"message": "API is running. Frontend not found.", "path": full_path}
 
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

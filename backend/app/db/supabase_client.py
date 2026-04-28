@@ -10,14 +10,20 @@ from pydantic import BaseModel
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Load environment variables
-load_dotenv()
+# Load environment variables (only if not already set, e.g., in local dev)
+if not os.getenv("SUPABASE_URL"):
+    load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError("SUPABASE_URL and SUPABASE_KEY must be set in the environment variables.")
+    # Log the names of missing variables (not the values!)
+    missing = []
+    if not SUPABASE_URL: missing.append("SUPABASE_URL")
+    if not SUPABASE_KEY: missing.append("SUPABASE_KEY")
+    logger.error(f"Missing environment variables: {', '.join(missing)}")
+    raise ValueError(f"Required environment variables are missing: {', '.join(missing)}")
 
 # Create and export a single Supabase client instance
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)

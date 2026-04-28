@@ -1,0 +1,11 @@
+# Ignore local environment variables and virtual environments
+.env
+.env.local
+venv
+__pycache__
+*.pyc
+.git
+.gitignore
+node_modules
+dist
+build

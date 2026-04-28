@@ -37,13 +37,13 @@ export default function VolunteerScheduling({ volunteerId, volunteerName }: Volu
 
   const createMutation = useMutation({
     mutationFn: () =>
-      createSchedulingSlot(
-        volunteerId,
-        newSlot.dayOfWeek,
-        newSlot.startTime,
-        newSlot.endTime,
-        newSlot.isRecurring
-      ),
+      createSchedulingSlot({
+        volunteer_id: volunteerId,
+        day_of_week: newSlot.dayOfWeek,
+        start_time: newSlot.startTime,
+        end_time: newSlot.endTime,
+        is_recurring: newSlot.isRecurring,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["volunteerschedule", volunteerId] });
       setShowAddForm(false);
@@ -74,7 +74,7 @@ export default function VolunteerScheduling({ volunteerId, volunteerName }: Volu
     return <div className="p-4 text-gray-500">Loading schedule...</div>;
   }
 
-  const typedSchedule: VolunteerSchedule = schedule;
+  const typedSchedule = schedule as VolunteerSchedule;
   const slots = typedSchedule?.slots || [];
   const slotsByDay = Array(7)
     .fill(null)

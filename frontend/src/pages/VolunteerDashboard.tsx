@@ -113,25 +113,25 @@ function StatsCard({ label, value, trend }: { label: string; value: string; tren
 export default function VolunteerDashboard() {
   // TODO: Fetch volunteer identity from backend session/profile endpoint.
   // DO NOT trust localStorage for identity or role authority.
-  const volunteerId = null; 
+  const volunteerId = ""; // Changed from null to empty string for TS compatibility
   const queryClient = useQueryClient();
 
   const volunteerQuery = useQuery<Volunteer>({
     queryKey: ["volunteer-profile", volunteerId],
-    queryFn: () => getVolunteer(volunteerId as string),
+    queryFn: () => getVolunteer(volunteerId),
     enabled: Boolean(volunteerId),
     refetchInterval: 60_000,
   });
 
   const tasksQuery = useQuery<Assignment[]>({
     queryKey: ["volunteer-tasks", volunteerId],
-    queryFn: () => getVolunteerTasks(volunteerId as string),
+    queryFn: () => getVolunteerTasks(volunteerId),
     enabled: Boolean(volunteerId),
     refetchInterval: 60_000,
   });
 
   const availabilityMutation = useMutation({
-    mutationFn: (available: boolean) => updateVolunteerAvailability(volunteerId as string, available),
+    mutationFn: (available: boolean) => updateVolunteerAvailability(volunteerId, available),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["volunteer-profile", volunteerId] });
       toast.success("Availability updated.");
