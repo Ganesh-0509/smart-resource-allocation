@@ -32,7 +32,7 @@ const NGORegister: React.FC = () => {
       });
       notify.dismiss(toastId);
       notify.success('Account created successfully! Please log in.');
-      navigate('/ngo/login');
+      navigate('/login');
     } catch (err: any) {
       notify.dismiss(toastId);
       const msg = err.message || 'Registration failed';
@@ -215,7 +215,7 @@ const NGORegister: React.FC = () => {
 
         <div className="mt-8 text-center text-slate-500 text-sm font-medium">
           Already have an account?{' '}
-          <Link to="/ngo/login" className="text-[#1A3C2E] hover:underline font-bold">
+          <Link to="/login" className="text-[#1A3C2E] hover:underline font-bold">
             Log in here
           </Link>
         </div>

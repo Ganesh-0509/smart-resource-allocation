@@ -7,24 +7,44 @@ create table if not exists ngos (
 	id uuid primary key default gen_random_uuid(),
 	name text not null,
 	email text unique not null,
-	created_at timestamptz not null default timezone('utc', now())
+	phone text,
+	description text,
+	district text,
+	registration_number text,
+	org_type text,
+	state text,
+	address text,
+	website text,
+	status text not null default 'pending' check (status in ('pending', 'approved', 'suspended')),
+	created_at timestamptz not null default timezone('utc', now()),
+	updated_at timestamptz not null default timezone('utc', now())
 );
 
 
 create table if not exists volunteers (
 	id uuid primary key default gen_random_uuid(),
-	ngo_id uuid not null,
+	ngo_id uuid not null references ngos(id) on delete cascade,
 	name text not null,
+	email text unique,
 	phone text,
+	gender text,
+	dob date,
+	blood_group text,
 	skills text[] not null default '{}',
+	ward text,
+	district text,
+	address text,
 	lat double precision not null,
 	lng double precision not null,
 	availability boolean not null default true,
-	ward text,
-	district text,
+	emergency_contact_name text,
+	emergency_contact_phone text,
+	id_proof_type text,
+	id_proof_number text,
 	performance_score double precision not null default 0,
 	total_tasks_done integer not null default 0,
 	status text not null default 'pending' check (status in ('pending', 'approved', 'active', 'inactive', 'rejected')),
+	joined_at timestamptz default now(),
 	created_at timestamptz not null default timezone('utc', now()),
 	updated_at timestamptz not null default timezone('utc', now())
 );
@@ -145,7 +165,6 @@ create table if not exists location_geocoding (
 	updated_at timestamptz not null default timezone('utc', now()),
 	unique(ward, district)
 );
-
 create table if not exists audit_logs (
 	id uuid primary key default gen_random_uuid(),
 	ngo_id uuid,
@@ -156,6 +175,20 @@ create table if not exists audit_logs (
 	entity_id uuid,
 	description text not null,
 	created_at timestamptz not null default timezone('utc', now())
+);
+
+create table if not exists field_workers (
+	id uuid primary key default gen_random_uuid(),
+	ngo_id uuid references ngos(id) on delete cascade,
+	name text not null,
+	phone text unique not null,
+	email text unique,
+	designation text,
+	base_location text,
+	status text not null default 'active' check (status in ('active', 'inactive', 'suspended')),
+	pin_hash text,
+	created_at timestamptz not null default timezone('utc', now()),
+	updated_at timestamptz not null default timezone('utc', now())
 );
 
 -- Phase C: Impact Analytics and Reporting
@@ -304,6 +337,12 @@ begin
 end;
 $$;
 
+drop trigger if exists trg_ngos_updated_at on ngos;
+create trigger trg_ngos_updated_at
+before update on ngos
+for each row
+execute function set_updated_at_timestamp();
+
 drop trigger if exists trg_volunteers_updated_at on volunteers;
 create trigger trg_volunteers_updated_at
 before update on volunteers
@@ -407,6 +446,12 @@ execute function set_updated_at_timestamp();
 drop trigger if exists trg_batch_assignments_updated_at on batch_assignments;
 create trigger trg_batch_assignments_updated_at
 before update on batch_assignments
+for each row
+execute function set_updated_at_timestamp();
+
+drop trigger if exists trg_field_workers_updated_at on field_workers;
+create trigger trg_field_workers_updated_at
+before update on field_workers
 for each row
 execute function set_updated_at_timestamp();
 

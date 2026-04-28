@@ -134,7 +134,7 @@ const FieldWorkerRegister: React.FC = () => {
                 value={baseLocation}
                 onChange={(e) => setBaseLocation(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-[#1A3C2E] focus:outline-none transition-all"
-                placeholder="e.g. Madurai South"
+                placeholder="e.g. Chennai Central"
                 required
               />
             </div>
@@ -179,7 +179,7 @@ const FieldWorkerRegister: React.FC = () => {
 
         <div className="mt-8 text-center text-slate-500 text-sm font-medium">
           Already have access?{' '}
-          <Link to="/field/login" className="text-[#1A3C2E] hover:underline font-bold">
+          <Link to="/login" className="text-[#1A3C2E] hover:underline font-bold">
             Log in here
           </Link>
         </div>

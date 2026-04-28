@@ -33,7 +33,7 @@ class VolunteerCreate(BaseModel):
     lng: float = Field(..., description="Longitude of the volunteer's exact or approximate location", examples=[77.2090])
     availability: bool = Field(True, description="Whether the volunteer is currently available to take on tasks", examples=[True])
     ward: Optional[str] = Field(None, description="The ward where the volunteer resides", examples=["Ward 12"])
-    district: str = Field(..., description="The district where the volunteer resides", examples=["Madurai"])
+    district: str = Field(..., description="The district where the volunteer resides", examples=["Chennai"])
     address: Optional[str] = Field(None, description="Residential address")
     emergency_contact_name: Optional[str] = Field(None, description="Name of emergency contact")
     emergency_contact_phone: Optional[str] = Field(None, description="Phone of emergency contact")
@@ -49,7 +49,7 @@ class VolunteerUpdate(BaseModel):
     lng: Optional[float] = Field(None, description="Longitude of the volunteer's exact or approximate location", examples=[77.2090])
     availability: Optional[bool] = Field(None, description="Whether the volunteer is currently available to take on tasks", examples=[True])
     ward: Optional[str] = Field(None, description="The ward where the volunteer resides", examples=["Ward 12"])
-    district: Optional[str] = Field(None, description="The district where the volunteer resides", examples=["Madurai"])
+    district: Optional[str] = Field(None, description="The district where the volunteer resides", examples=["Chennai"])
 
 class VolunteerResponse(VolunteerCreate):
     id: UUID = Field(..., description="Unique identifier for the volunteer", examples=["123e4567-e89b-12d3-a456-426614174000"])

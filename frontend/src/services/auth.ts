@@ -23,3 +23,18 @@ export async function registerNGO(payload: NGORegisterPayload) {
   const response = await api.post("/api/auth/register", payload);
   return response.data;
 }
+
+export async function loginFieldWorker(phone: string, pin: string) {
+  const response = await api.post("/api/auth/field/login", { phone, pin });
+  return response.data;
+}
+
+export async function registerFieldWorker(payload: any) {
+  const response = await api.post("/api/auth/field/register", payload);
+  return response.data;
+}
+
+export async function getPublicNGOs() {
+  const response = await api.get("/api/auth/ngos/public");
+  return response.data;
+}

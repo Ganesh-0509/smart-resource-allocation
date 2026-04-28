@@ -52,7 +52,7 @@ _DISTRICT_COORDINATES: dict[str, tuple[float, float]] = {
     "Virudhunagar": (9.5841, 77.9579),
 }
 
-_DEFAULT_COORDINATES = _DISTRICT_COORDINATES["Madurai"]
+_DEFAULT_COORDINATES = _DISTRICT_COORDINATES["Chennai"]
 
 
 def _fallback_result() -> dict[str, Any]:
@@ -219,7 +219,7 @@ async def process_survey(image_bytes: bytes) -> dict[str, Any]:
             "description": "",
             "urgency_score": 0,
             "ward": "",
-            "district": "Madurai",
+            "district": "Chennai",
             "lat": default_lat,
             "lng": default_lng,
             "required_skills": [],
@@ -240,7 +240,7 @@ async def process_survey(image_bytes: bytes) -> dict[str, Any]:
             "required_skills": [],
             "household_count": 1,
             "ward": None,
-            "district": "Madurai",
+            "district": "Chennai",
             "summary": "Need report could not be classified automatically.",
         }
 
@@ -279,7 +279,7 @@ async def process_survey(image_bytes: bytes) -> dict[str, Any]:
         "description": raw_text if raw_text else summary,
         "urgency_score": urgency_score,
         "ward": str(ward) if ward else "",
-        "district": str(district) if district else "Madurai",
+        "district": str(district) if district else "Chennai",
         "lat": resolved_lat,
         "lng": resolved_lng,
         "required_skills": required_skills,

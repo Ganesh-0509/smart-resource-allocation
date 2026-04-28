@@ -2,9 +2,7 @@ import { Route, Routes, Navigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import LandingPage from "../pages/LandingPage";
 
-import NGOLogin from "../pages/NGOLogin";
-import VolunteerLogin from "../pages/VolunteerLogin";
-import FieldLogin from "../pages/FieldLogin";
+import UnifiedLogin from "../pages/UnifiedLogin";
 import NGORegister from "../pages/NGORegister";
 import VolunteerRegister from "../pages/VolunteerRegister";
 import FieldWorkerRegister from "../pages/FieldWorkerRegister";
@@ -14,7 +12,7 @@ import MissionPlanning from "../pages/MissionPlanning";
 import VolunteerManagement from "../pages/VolunteerManagement";
 import VolunteerDashboard from "../pages/VolunteerDashboard";
 import SurveyUpload from "../pages/SurveyUpload";
-import AdminLogin from "../pages/AdminLogin";
+import AdminRegister from "../pages/AdminRegister";
 import AdminConsole from "../pages/AdminConsole";
 
 export default function AppRoutes() {
@@ -23,13 +21,19 @@ export default function AppRoutes() {
       {/* Public Routes */}
       <Route path="/" element={<LandingPage />} />
 
-      <Route path="/ngo/login" element={<NGOLogin />} />
-      <Route path="/volunteer/login" element={<VolunteerLogin />} />
-      <Route path="/field/login" element={<FieldLogin />} />
+      {/* Unified Login & Signup */}
+      <Route path="/login" element={<UnifiedLogin />} />
+      <Route path="/admin/register" element={<AdminRegister />} />
+      
+      {/* Legacy/Specific Login Redirects */}
+      <Route path="/ngo/login" element={<Navigate to="/login" replace />} />
+      <Route path="/volunteer/login" element={<Navigate to="/login" replace />} />
+      <Route path="/field/login" element={<Navigate to="/login" replace />} />
+      <Route path="/admin/login" element={<Navigate to="/login" replace />} />
+      
       <Route path="/ngo/register" element={<NGORegister />} />
       <Route path="/volunteer/register" element={<VolunteerRegister />} />
       <Route path="/field/register" element={<FieldWorkerRegister />} />
-      <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/console" element={<AdminConsole />} />
 
       {/* Main App Routes with Sidebar */}

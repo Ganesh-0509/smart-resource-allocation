@@ -23,6 +23,11 @@ class LoginRequest(BaseModel):
     email: str
     password: str
 
+class FieldWorkerLoginRequest(BaseModel):
+    phone: str
+    pin: str
+
+
 class FieldWorkerRegisterRequest(BaseModel):
     name: str
     phone: str
@@ -172,6 +177,46 @@ def register_field_worker(req: FieldWorkerRegisterRequest):
         return {"message": "Field Worker registered successfully", "id": auth_response.user.id}
     except Exception as e:
         handle_db_error(e)
+
+@router.post("/field/login")
+def login_field_worker(req: FieldWorkerLoginRequest):
+    """
+    Login for Field Workers using Phone and PIN.
+    """
+    try:
+        # 1. Find field worker by phone
+        res = supabase.table("field_workers").select("*").eq("phone", req.phone).execute()
+        if not res.data:
+            raise HTTPException(status_code=401, detail="Invalid phone number or PIN")
+        
+        worker = res.data[0]
+        
+        # 2. Verify PIN (using plain comparison for now as per previous implementation, but better with hash)
+        # Note: If we hashed it in register, we should verify it here.
+        if worker.get("pin_hash") != req.pin:
+            raise HTTPException(status_code=401, detail="Invalid phone number or PIN")
+            
+        # 3. Sign in to Supabase Auth to get a token (Field workers have an auth account)
+        # Their password is 'field-{pin}' as per register_field_worker
+        auth_res = supabase.auth.sign_in_with_password({
+            "email": worker["email"],
+            "password": f"field-{req.pin}"
+        })
+        
+        if not auth_res.session:
+            raise HTTPException(status_code=401, detail="Auth session failed")
+
+        return {
+            "access_token": auth_res.session.access_token,
+            "field_worker_id": worker["id"],
+            "name": worker["name"],
+            "role": "field",
+            "ngo_id": worker["ngo_id"]
+        }
+    except Exception as e:
+        if isinstance(e, HTTPException): raise e
+        handle_db_error(e)
+
 
 @router.get("/ngos/public")
 def get_approved_ngos():

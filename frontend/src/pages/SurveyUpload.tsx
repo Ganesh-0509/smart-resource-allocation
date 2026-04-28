@@ -24,7 +24,7 @@ type SurveyFormState = {
   lng: number | null;
 };
 
-const defaultSurveyCoordinates = districtCoordinates.Madurai;
+const defaultSurveyCoordinates = districtCoordinates.Chennai;
 
 
 
@@ -64,7 +64,7 @@ export default function SurveyUpload() {
     need_type: "other",
     urgency: "medium",
     ward: "",
-    district: "Madurai",
+    district: "Chennai",
     household_count: 1,
     required_skills: [],
     description: "",
@@ -93,7 +93,7 @@ export default function SurveyUpload() {
         need_type: toTaskNeedType(result.need_type),
         urgency: result.urgency,
         ward: result.ward || "",
-        district: result.district || "Madurai",
+        district: result.district || "Chennai",
         household_count: Math.max(1, Number(result.household_count || 1)),
         required_skills: toSkillList(result.required_skills),
         description: result.description || "",

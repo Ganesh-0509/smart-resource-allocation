@@ -5,9 +5,9 @@ from typing import Tuple, Optional
 
 logger = logging.getLogger(__name__)
 
-# Fallback coordinates (Madurai, India)
-DEFAULT_LAT = 9.9252
-DEFAULT_LNG = 78.1198
+# Fallback coordinates (Chennai, India)
+DEFAULT_LAT = 13.0827
+DEFAULT_LNG = 80.2707
 
 def geocode_address(ward: Optional[str], district: Optional[str]) -> Tuple[float, float]:
     """

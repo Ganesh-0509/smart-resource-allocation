@@ -50,7 +50,7 @@ export default function AdminConsole() {
 
   const handleLogout = () => {
     localStorage.clear();
-    navigate("/admin/login");
+    navigate("/login");
   };
 
   const statusColors: Record<string, { bg: string; text: string; border: string }> = {

@@ -428,10 +428,9 @@ export default function LandingPage() {
           <img src={logo} alt="Namma Connect Logo" />
           <span>Namma Connect</span>
         </div>
-        <div className="nav-actions" style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <button onClick={() => navigate("/admin/login")} style={{ background: "none", border: "none", fontSize: "13px", color: "var(--slate)", cursor: "pointer", fontWeight: 600, opacity: 0.5 }}>Admin</button>
-          <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--forest)", cursor: "pointer" }} onClick={() => navigate("/volunteer/register")}>Join as Volunteer</span>
-          <button onClick={() => navigate("/ngo/login")} className="btn-secondary" style={{ padding: '10px 24px', fontSize: '14px' }}>NGO Login</button>
+        <div className="nav-actions" style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+          <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--forest)", cursor: "pointer", opacity: 0.8 }} onClick={() => navigate("/volunteer/register")}>Join as Volunteer</span>
+          <button onClick={() => navigate("/login")} className="btn-secondary" style={{ padding: '10px 28px', fontSize: '14px', borderRadius: '14px' }}>Sign In</button>
         </div>
       </nav>
 
@@ -452,11 +451,8 @@ export default function LandingPage() {
               AI-powered volunteer matching, OCR survey digitization, and real-time need tracking — built for NGOs operating across India.
             </p>
             <div className="hero-actions">
-              <button onClick={() => navigate("/ngo/login")} className="btn-primary">
-                Enter Dashboard
-                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-              </button>
-              <button onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: 'smooth' })} className="btn-secondary">See how it works</button>
+              <button onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: 'smooth' })} className="btn-primary">Get Started</button>
+              <button onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: 'smooth' })} className="btn-secondary">Explore Features</button>
             </div>
           </div>
 
@@ -471,7 +467,7 @@ export default function LandingPage() {
 
             <div className="dashboard-card">
               <div className="dash-header">
-                <div className="dash-title">Coordinator Dashboard · Madurai</div>
+                <div className="dash-title">Coordinator Dashboard · Chennai</div>
                 <div className="dash-badge">● 4 active</div>
               </div>
               <div className="stat-row">
@@ -500,7 +496,7 @@ export default function LandingPage() {
                 <div className="task-item">
                   <div className="urgency-dot u-high"></div>
                   <div className="task-info">
-                    <div className="task-name">Water contamination — Usilampatti</div>
+                    <div className="task-name">Water contamination — Velachery</div>
                     <div className="task-meta">Water · Medical · 28 households</div>
                   </div>
                   <div className="task-score">91</div>
@@ -508,7 +504,7 @@ export default function LandingPage() {
                 <div className="task-item">
                   <div className="urgency-dot u-medium"></div>
                   <div className="task-info">
-                    <div className="task-name">Medical camp — Thirumangalam</div>
+                    <div className="task-name">Medical camp — Adyar</div>
                     <div className="task-meta">Medical · 45 beneficiaries</div>
                   </div>
                   <div className="task-score">76</div>
@@ -652,7 +648,7 @@ export default function LandingPage() {
             <div className="quote-mark">"</div>
             <div>
               <div className="quote-text">In a district with 50 active volunteers, Namma Connect could reduce missed needs by 60% and cut response time from 4 hours to under 30 minutes.</div>
-              <div className="quote-author">— Impact projection, Madurai district pilot</div>
+              <div className="quote-author">— Impact projection, Chennai district pilot</div>
             </div>
           </div>
           </div>
@@ -667,8 +663,8 @@ export default function LandingPage() {
             <p>Join NGOs across India using Namma Connect to turn community needs into coordinated action — faster and smarter than ever before.</p>
           </div>
           <div className="cta-actions">
-            <button onClick={() => navigate("/ngo/login")} className="btn-cta-primary">NGO Portal →</button>
-            <button onClick={() => navigate("/volunteer/register")} className="btn-cta-secondary">Join as Volunteer</button>
+            <button onClick={() => navigate("/volunteer/register")} className="btn-cta-primary">Join the Mission →</button>
+            <button onClick={() => document.getElementById("hero")?.scrollIntoView({ behavior: 'smooth' })} className="btn-cta-secondary">Back to Top</button>
           </div>
         </div>
       </div>

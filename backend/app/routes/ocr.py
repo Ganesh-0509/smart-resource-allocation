@@ -104,7 +104,7 @@ async def scan_survey_image(
             "need_type": extracted.get("need_type", "other"),
             "urgency": urgency,
             "ward": extracted.get("ward", ""),
-            "district": extracted.get("district", "Madurai"),
+            "district": extracted.get("district", "Chennai"),
             "lat": float(extracted.get("lat", 0.0)),
             "lng": float(extracted.get("lng", 0.0)),
             "household_count": int(extracted.get("household_count", 1)),

@@ -19,9 +19,52 @@ class AdminLoginRequest(BaseModel):
     password: str
 
 
+class AdminRegisterRequest(BaseModel):
+    email: str
+    password: str
+    secret_token: str
+
+
 class NGOStatusUpdate(BaseModel):
     status: str  # 'approved', 'suspended', 'pending'
     reason: Optional[str] = None
+
+
+@router.post("/register")
+def admin_register(req: AdminRegisterRequest):
+    """
+    Register a new Super Admin. Requires a secret token.
+    """
+    import os
+    master_token = os.getenv("ADMIN_REGISTRATION_TOKEN", "namma-admin-secret-2026")
+    
+    if req.secret_token != master_token:
+        raise HTTPException(status_code=403, detail="Invalid secret token for admin registration.")
+
+    try:
+        # 1. Create user in Supabase Auth
+        auth_response = supabase.auth.sign_up({
+            "email": req.email,
+            "password": req.password,
+            "options": {
+                "data": {
+                    "role": "admin"
+                }
+            }
+        })
+        
+        if not auth_response.user:
+            raise HTTPException(status_code=400, detail="Admin registration failed at auth level.")
+
+        # Note: In Supabase, setting metadata via sign_up is common, 
+        # but you may also need a trigger to sync it to public.admins table if one exists.
+        
+        return {
+            "message": "Admin account created successfully.",
+            "admin_id": auth_response.user.id
+        }
+    except Exception as e:
+        handle_db_error(e)
 
 
 @router.post("/login")

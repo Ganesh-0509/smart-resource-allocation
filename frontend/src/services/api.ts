@@ -43,7 +43,7 @@ api.interceptors.response.use(
       if (!path.includes("/login")) {
         // Send admin users back to admin login, others to landing
         if (path.startsWith("/admin")) {
-          window.location.href = "/admin/login";
+          window.location.href = "/login";
         } else {
           window.location.href = "/";
         }
